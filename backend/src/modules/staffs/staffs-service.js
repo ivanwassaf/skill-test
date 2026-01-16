@@ -3,9 +3,6 @@ const { addOrUpdateStaff, reviewStaffStatus, getAllStaffs, getStaffDetailById } 
 
 const processGetAllStaffs = async (payload) => {
     const staffs = await getAllStaffs(payload);
-    if (staffs.length <= 0) {
-        throw new ApiError(404, "Staffs not found");
-    }
     return staffs;
 }
 

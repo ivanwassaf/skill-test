@@ -18,7 +18,10 @@ export const BasicInfoSchema = z.object({
 export const AcademicInfoSchema = z.object({
   class: z.string().min(1, 'Class is required'),
   section: z.string(),
-  roll: z.string().min(1, 'Roll is required'),
+  roll: z.string()
+    .min(1, 'Roll is required')
+    .regex(/^\d+$/, 'Roll must be a valid number')
+    .refine((val) => parseInt(val) > 0, { message: 'Roll must be greater than 0' }),
   admissionDate: z.union([z.date(), z.string()])
 });
 

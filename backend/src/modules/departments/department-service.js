@@ -10,9 +10,6 @@ const { departmentModuleHandler } = require("./department-module");
 
 const processGetAllDepartments = async () => {
   const departments = await getAllDepartments();
-  if (departments.length <= 0) {
-    throw new ApiError(404, "Departments not found");
-  }
 
   return departments;
 };

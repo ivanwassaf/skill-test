@@ -3,10 +3,6 @@ const { getAllSections, getSectionById, updateSectionById, deleteSectionById, ad
 
 const processGetAllSections = async () => {
     const sections = await getAllSections();
-    if (sections.length <= 0) {
-        throw new ApiError(404, "Sections not found");
-    }
-
     return sections;
 }
 

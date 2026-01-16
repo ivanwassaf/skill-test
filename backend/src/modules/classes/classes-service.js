@@ -3,10 +3,6 @@ const { getAllClasses, getClassDetail, addNewClass, updateClassDetailById, delet
 
 const fetchAllClasses = async () => {
     const classes = await getAllClasses();
-    if (!Array.isArray(classes) || classes.length <= 0) {
-        throw new ApiError(404, "Classes not found");
-    }
-
     return classes;
 }
 
