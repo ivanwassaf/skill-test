@@ -71,6 +71,23 @@ services:
       - school_network
     restart: unless-stopped
 
+  # Go PDF Report Service
+  pdf-service:
+    build:
+      context: ./go-service
+      dockerfile: Dockerfile
+    container_name: school_mgmt_pdf_service
+    environment:
+      BACKEND_URL: http://backend:5007
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+    networks:
+      - school_network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
 
