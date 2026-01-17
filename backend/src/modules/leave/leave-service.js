@@ -29,7 +29,7 @@ const updateLeavePolicy = async (name, id) => {
 const fetchLeavePolicies = async () => {
     const policies = await getLeavePolicies();
     if (!Array.isArray(policies) || policies.length <= 0) {
-        throw new ApiError(404, "Leave policies not found");
+        return []; // Return empty array instead of throwing error
     }
 
     return policies;
@@ -38,7 +38,7 @@ const fetchLeavePolicies = async () => {
 const processGetMyLeavePolicy = async (id) => {
     const policies = await getMyLeavePolicy(id);
     if (!Array.isArray(policies) || policies.length <= 0) {
-        throw new ApiError(404, "Leave policies not found");
+        return []; // Return empty array instead of throwing error
     }
 
     return policies;
