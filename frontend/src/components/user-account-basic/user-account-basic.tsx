@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Box, ListItemIcon, ListItemText, MenuItem, Paper, Typography } from '@mui/material';
-import { Block, CheckCircle, Edit, Email, Key, LockReset, Visibility, PictureAsPdf } from '@mui/icons-material';
+import { Block, CheckCircle, Edit, Email, Key, LockReset, Visibility, PictureAsPdf, CardMembership } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
@@ -9,6 +9,7 @@ import { MaterialReactTable, MRT_ColumnDef, useMaterialReactTable } from 'materi
 import Cookies from 'js-cookie';
 
 import { DialogModal } from '@/components/dialog-modal';
+import { IssueCertificateDialog } from '@/domains/certificate';
 import { DATE_TIME_24_HR_FORMAT, getFormattedDate } from '@/utils/helpers/date';
 import { getErrorMsg } from '@/utils/helpers/get-error-message';
 import { UserAccountBasicDataProps, UserAccountBasicProps } from './user-account-basic-type';
@@ -22,6 +23,8 @@ type State = {
   modalBodyText: string;
   userId: number;
   menuAction: string;
+  certificateDialogOpen: boolean;
+  selectedStudent: { id: string; name: string } | null;
 };
 const initialState = {
   isSaving: false,
@@ -29,7 +32,9 @@ const initialState = {
   modalTitle: '',
   modalBodyText: '',
   userId: 0,
-  menuAction: ''
+  menuAction: '',
+  certificateDialogOpen: false,
+  selectedStudent: null
 };
 
 export const UserAccountBasic = ({ data }: { data: UserAccountBasicDataProps }) => {
@@ -203,6 +208,23 @@ export const UserAccountBasic = ({ data }: { data: UserAccountBasicDataProps }) 
             <PictureAsPdf fontSize='small' />
           </ListItemIcon>
           <ListItemText>Download PDF Report</ListItemText>
+        </MenuItem>,
+        <MenuItem
+          key='certificate'
+          onClick={() => {
+            closeMenu();
+            const student = users?.find(u => u.id === id);
+            setState((prevState) => ({
+              ...prevState,
+              certificateDialogOpen: true,
+              selectedStudent: student ? { id: id.toString(), name: student.name } : null
+            }));
+          }}
+        >
+          <ListItemIcon>
+            <CardMembership fontSize='small' />
+          </ListItemIcon>
+          <ListItemText>Issue Certificate</ListItemText>
         </MenuItem>
       ] : [];
 
@@ -229,7 +251,7 @@ export const UserAccountBasic = ({ data }: { data: UserAccountBasicDataProps }) 
     }
   });
 
-  const { modalTitle, modalBodyText, isModalOpen, isSaving } = state;
+  const { modalTitle, modalBodyText, isModalOpen, isSaving, certificateDialogOpen, selectedStudent } = state;
   return (
     <>
       <Box sx={{ width: '100%', display: 'table', tableLayout: 'fixed' }} component={Paper}>
@@ -247,6 +269,15 @@ export const UserAccountBasic = ({ data }: { data: UserAccountBasicDataProps }) 
       >
         <Typography variant='body1'>{modalBodyText}</Typography>
       </DialogModal>
+
+      {selectedStudent && (
+        <IssueCertificateDialog
+          open={certificateDialogOpen}
+          onClose={() => setState((prev) => ({ ...prev, certificateDialogOpen: false, selectedStudent: null }))}
+          studentId={selectedStudent.id}
+          studentName={selectedStudent.name}
+        />
+      )}
     </>
   );
 };
