@@ -89,7 +89,6 @@ export const NoticeForm: React.FC<Props> = ({
         {...register('description')}
         error={Boolean(errors.description)}
         helperText={errors.description?.message}
-        type='text'
         label='Description'
         size='small'
         multiline
