@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { Box, ListItemIcon, ListItemText, MenuItem, Paper, Typography } from '@mui/material';
-import { Block, CheckCircle, Edit, Email, Key, LockReset, Visibility } from '@mui/icons-material';
+import { Block, CheckCircle, Edit, Email, Key, LockReset, Visibility, PictureAsPdf } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { SerializedError } from '@reduxjs/toolkit';
 import { MaterialReactTable, MRT_ColumnDef, useMaterialReactTable } from 'material-react-table';
+import Cookies from 'js-cookie';
 
 import { DialogModal } from '@/components/dialog-modal';
 import { DATE_TIME_24_HR_FORMAT, getFormattedDate } from '@/utils/helpers/date';
@@ -84,6 +85,45 @@ export const UserAccountBasic = ({ data }: { data: UserAccountBasicDataProps }) 
     }
   };
 
+  const handleDownloadPDF = async (studentId: number) => {
+    try {
+      toast.info('Generating PDF report...');
+      
+      // Get CSRF token from cookies
+      const csrfToken = Cookies.get('csrfToken');
+      
+      // Fetch PDF from backend (which will call the Go service)
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${apiUrl}/api/v1/students/${studentId}/report`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'x-csrf-token': csrfToken || ''
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to generate PDF: ${response.status} - ${errorText}`);
+      }
+
+      // Convert response to blob
+      const blob = await response.blob();
+      
+      // Create a URL for the blob and open in new tab
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      
+      // Clean up the URL after a short delay
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      
+      toast.success('PDF report generated successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   const menuActions = [
     {
       action: userType === 'staff' ? 'DISABLE_STAFF_STATUS' : 'DISABLE_STUDENT_STATUS',
@@ -149,8 +189,26 @@ export const UserAccountBasic = ({ data }: { data: UserAccountBasicDataProps }) 
           <ListItemText>Edit</ListItemText>
         </MenuItem>
       ];
+      
+      // Add PDF download option for students only
+      const pdfAction = userType === 'student' ? [
+        <MenuItem
+          key='pdf'
+          onClick={() => {
+            closeMenu();
+            handleDownloadPDF(id);
+          }}
+        >
+          <ListItemIcon>
+            <PictureAsPdf fontSize='small' />
+          </ListItemIcon>
+          <ListItemText>Download PDF Report</ListItemText>
+        </MenuItem>
+      ] : [];
+
       return [
         ...staticAction,
+        ...pdfAction,
         menuActions.map(({ action, icon, text }) => (
           <MenuItem
             onClick={() => {
