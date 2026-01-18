@@ -1,4 +1,5 @@
 import { api } from '@/api';
+import { Tag } from '@/api/tag-types';
 
 export interface Certificate {
   id: string;
@@ -42,37 +43,37 @@ export const certificatesApi = api.injectEndpoints({
   endpoints: (builder) => ({
     issueCertificate: builder.mutation<any, IssueCertificateRequest>({
       query: (data) => ({
-        url: '/api/v1/certificates',
+        url: '/certificates',
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: ['Certificate'],
+      invalidatesTags: [Tag.CERTIFICATE],
     }),
 
     verifyCertificate: builder.query<{ success: boolean; valid: boolean; data?: Certificate }, string>({
-      query: (certificateId) => `/api/v1/certificates/verify/${certificateId}`,
+      query: (certificateId) => `/certificates/verify/${certificateId}`,
     }),
 
     getCertificate: builder.query<{ success: boolean; data: Certificate }, string>({
-      query: (certificateId) => `/api/v1/certificates/details/${certificateId}`,
-      providesTags: (result, error, id) => [{ type: 'Certificate', id }],
+      query: (certificateId) => `/certificates/details/${certificateId}`,
+      providesTags: (_result, _error, id) => [{ type: Tag.CERTIFICATE, id }],
     }),
 
     getStudentCertificates: builder.query<{ success: boolean; data: Certificate[] }, string>({
-      query: (studentId) => `/api/v1/certificates/student/${studentId}`,
-      providesTags: (result, error, id) => [{ type: 'Certificate', id: `student-${id}` }],
+      query: (studentId) => `/certificates/student/${studentId}`,
+      providesTags: (_result, _error, id) => [{ type: Tag.CERTIFICATE, id: `student-${id}` }],
     }),
 
     revokeCertificate: builder.mutation<any, string>({
       query: (certificateId) => ({
-        url: `/api/v1/certificates/${certificateId}/revoke`,
+        url: `/certificates/${certificateId}/revoke`,
         method: 'POST',
       }),
-      invalidatesTags: (result, error, id) => [{ type: 'Certificate', id }],
+      invalidatesTags: (_result, _error, id) => [{ type: Tag.CERTIFICATE, id }],
     }),
 
     getCertificateStats: builder.query<{ success: boolean; data: CertificateStats }, void>({
-      query: () => '/api/v1/certificates/stats',
+      query: () => '/certificates/stats',
     }),
   }),
   overrideExisting: false,
