@@ -79,8 +79,11 @@ contract StudentCertificate is AccessControl {
         require(studentAddress != address(0), "Invalid student address");
         require(bytes(studentName).length > 0, "Student name required");
         require(bytes(certificateType).length > 0, "Certificate type required");
-        require(bytes(ipfsHash).length > 0, "IPFS hash required");
-        require(!usedHashes[ipfsHash], "Certificate already exists");
+        
+        // Only check for duplicate hash if IPFS hash is provided
+        if (bytes(ipfsHash).length > 0) {
+            require(!usedHashes[ipfsHash], "Certificate already exists");
+        }
         
         _certificateIdCounter++;
         uint256 newCertificateId = _certificateIdCounter;
@@ -98,7 +101,11 @@ contract StudentCertificate is AccessControl {
         });
         
         studentCertificates[studentAddress].push(newCertificateId);
-        usedHashes[ipfsHash] = true;
+        
+        // Only mark hash as used if IPFS hash is provided
+        if (bytes(ipfsHash).length > 0) {
+            usedHashes[ipfsHash] = true;
+        }
         
         emit CertificateIssued(
             newCertificateId,
