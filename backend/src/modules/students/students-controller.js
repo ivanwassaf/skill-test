@@ -10,9 +10,7 @@ const handleGetAllStudents = asyncHandler(async (req, res) => {
 
 const handleAddStudent = asyncHandler(async (req, res) => {
     const payload = req.body;
-    console.log('=== ADD STUDENT PAYLOAD ===');
-    console.log(JSON.stringify(payload, null, 2));
-    console.log('===========================');
+    logger.debug('Adding student', { payload });
     const message = await addNewStudent(payload);
     res.json(message);
 });
@@ -40,16 +38,15 @@ const handleStudentStatus = asyncHandler(async (req, res) => {
 
 const handleGeneratePDFReport = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    console.log('=== GENERATE PDF REPORT ===');
-    console.log('Student ID:', id);
+    logger.info('Generating PDF report', { studentId: id });
     
     // Get student data (this already validates authentication)
     const student = await getStudentDetail(id);
-    console.log('Student data retrieved:', student.name);
+    logger.debug('Student data retrieved', { studentName: student.name });
     
     // Call Go PDF service with student data
     const pdfServiceUrl = process.env.PDF_SERVICE_URL || 'http://pdf-service:8080';
-    console.log('PDF Service URL:', pdfServiceUrl);
+    logger.debug('PDF Service URL', { url: pdfServiceUrl });
     
     try {
         const response = await axios.post(
@@ -64,7 +61,7 @@ const handleGeneratePDFReport = asyncHandler(async (req, res) => {
             }
         );
         
-        console.log('PDF generated successfully, size:', response.data.length, 'bytes');
+        logger.info('PDF generated successfully', { size: response.data.length });
         
         // Send PDF back to client
         res.set({
@@ -73,11 +70,11 @@ const handleGeneratePDFReport = asyncHandler(async (req, res) => {
         });
         res.send(response.data);
     } catch (error) {
-        console.error('Error calling PDF service:', error.message);
-        if (error.response) {
-            console.error('Response status:', error.response.status);
-            console.error('Response data:', error.response.data);
-        }
+        logger.error('Error calling PDF service', { 
+            error: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
         throw new Error('Failed to generate PDF report');
     }
 });

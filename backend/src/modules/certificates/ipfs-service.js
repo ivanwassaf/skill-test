@@ -1,5 +1,6 @@
 const axios = require('axios');
 const FormData = require('form-data');
+const logger = require('../../config/logger');
 
 class IPFSService {
     constructor() {
@@ -74,7 +75,7 @@ class IPFSService {
                 timestamp: response.data.Timestamp
             };
         } catch (error) {
-            console.error('Error uploading to IPFS:', error.response?.data || error.message);
+            logger.error('Error uploading to IPFS', { error: error.response?.data || error.message });
             throw new Error(`Failed to upload to IPFS: ${error.message}`);
         }
     }
@@ -87,7 +88,7 @@ class IPFSService {
             const response = await axios.get(`${this.gatewayUrl}/${ipfsHash}`);
             return response.data;
         } catch (error) {
-            console.error('Error fetching from IPFS:', error.message);
+            logger.error('Error fetching from IPFS', { error: error.message, ipfsHash });
             throw new Error(`Failed to fetch from IPFS: ${error.message}`);
         }
     }
@@ -116,7 +117,7 @@ class IPFSService {
 
             return { success: true };
         } catch (error) {
-            console.error('Error pinning hash:', error.message);
+            logger.error('Error pinning hash', { error: error.message, ipfsHash });
             throw new Error(`Failed to pin hash: ${error.message}`);
         }
     }
@@ -142,7 +143,7 @@ class IPFSService {
 
             return { success: true };
         } catch (error) {
-            console.error('Error unpinning:', error.message);
+            logger.error('Error unpinning', { error: error.message, ipfsHash });
             throw new Error(`Failed to unpin: ${error.message}`);
         }
     }

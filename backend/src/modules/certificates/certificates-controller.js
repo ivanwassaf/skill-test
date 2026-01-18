@@ -94,7 +94,7 @@ const handleIssueCertificate = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error issuing certificate:', error);
+        logger.error('Error issuing certificate', { error: error.message, studentId });
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to issue certificate'
@@ -145,7 +145,7 @@ const handleVerifyCertificate = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error verifying certificate:', error);
+        logger.error('Error verifying certificate', { error: error.message, certificateId });
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to verify certificate'
@@ -186,7 +186,7 @@ const handleGetCertificate = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error getting certificate:', error);
+        logger.error('Error getting certificate', { error: error.message, certificateId });
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to get certificate'
@@ -230,7 +230,7 @@ const handleGetStudentCertificates = async (req, res) => {
                     const cert = await blockchainService.getCertificate(id);
                     return cert;
                 } catch (error) {
-                    console.error(`Error fetching certificate ${id}:`, error);
+                    logger.debug('Error fetching certificate', { error: error.message, id });
                     return null;
                 }
             })
@@ -241,7 +241,7 @@ const handleGetStudentCertificates = async (req, res) => {
             data: certificates.filter(c => c !== null)
         });
     } catch (error) {
-        console.error('Error getting student certificates:', error);
+        logger.error('Error getting student certificates', { error: error.message, studentId });
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to get student certificates'
@@ -271,7 +271,7 @@ const handleRevokeCertificate = async (req, res) => {
             data: result
         });
     } catch (error) {
-        console.error('Error revoking certificate:', error);
+        logger.error('Error revoking certificate', { error: error.message, certificateId });
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to revoke certificate'
@@ -306,7 +306,7 @@ const handleGetStats = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error getting stats:', error);
+        logger.error('Error getting stats', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to get statistics'

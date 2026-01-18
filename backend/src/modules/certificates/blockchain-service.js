@@ -1,6 +1,7 @@
 const { ethers } = require('ethers');
 const path = require('path');
 const fs = require('fs');
+const logger = require('../../config/logger');
 
 class BlockchainService {
     constructor() {
@@ -49,13 +50,11 @@ class BlockchainService {
             await this.provider.getBlockNumber();
             
             this.initialized = true;
-            console.log('✅ Blockchain service initialized on', network);
-            console.log('📍 Contract address:', contractAddress);
-            console.log('👤 Wallet address:', this.wallet.address);
+            logger.info('✅ Blockchain service initialized', { network, contractAddress, walletAddress: this.wallet.address });
 
             return true;
         } catch (error) {
-            console.error('❌ Failed to initialize blockchain:', error.message);
+            logger.error('❌ Failed to initialize blockchain', { error: error.message });
             return false;
         }
     }
@@ -120,7 +119,7 @@ class BlockchainService {
                 blockNumber: receipt.blockNumber
             };
         } catch (error) {
-            console.error('Error issuing certificate:', error);
+            logger.error('Error issuing certificate', { error: error.message, studentAddress });
             throw new Error(`Failed to issue certificate: ${error.message}`);
         }
     }
@@ -137,7 +136,7 @@ class BlockchainService {
             const isValid = await this.contract.verifyCertificate(certificateId);
             return isValid;
         } catch (error) {
-            console.error('Error verifying certificate:', error);
+            logger.error('Error verifying certificate', { error: error.message, certificateId });
             return false;
         }
     }
@@ -165,7 +164,7 @@ class BlockchainService {
                 revoked: cert.revoked
             };
         } catch (error) {
-            console.error('Error getting certificate:', error);
+            logger.error('Error getting certificate', { error: error.message, certificateId });
             throw new Error(`Failed to get certificate: ${error.message}`);
         }
     }
@@ -182,7 +181,7 @@ class BlockchainService {
             const certIds = await this.contract.getStudentCertificates(studentAddress);
             return certIds.map(id => id.toString());
         } catch (error) {
-            console.error('Error getting student certificates:', error);
+            logger.error('Error getting student certificates', { error: error.message, studentAddress });
             return [];
         }
     }
@@ -205,7 +204,7 @@ class BlockchainService {
                 blockNumber: receipt.blockNumber
             };
         } catch (error) {
-            console.error('Error revoking certificate:', error);
+            logger.error('Error revoking certificate', { error: error.message, certificateId });
             throw new Error(`Failed to revoke certificate: ${error.message}`);
         }
     }
@@ -225,7 +224,7 @@ class BlockchainService {
                 certificateId: certId ? certId.toString() : null
             };
         } catch (error) {
-            console.error('Error verifying by hash:', error);
+            logger.error('Error verifying by hash', { error: error.message, ipfsHash });
             return { isValid: false, certificateId: null };
         }
     }
@@ -242,7 +241,7 @@ class BlockchainService {
             const total = await this.contract.getTotalCertificates();
             return total.toString();
         } catch (error) {
-            console.error('Error getting total certificates:', error);
+            logger.error('Error getting total certificates', { error: error.message });
             return '0';
         }
     }
@@ -264,7 +263,7 @@ class BlockchainService {
                 transactionHash: receipt.hash
             };
         } catch (error) {
-            console.error('Error adding issuer:', error);
+            logger.error('Error adding issuer', { error: error.message, issuerAddress });
             throw new Error(`Failed to add issuer: ${error.message}`);
         }
     }
@@ -286,7 +285,7 @@ class BlockchainService {
                 transactionHash: receipt.hash
             };
         } catch (error) {
-            console.error('Error removing issuer:', error);
+            logger.error('Error removing issuer', { error: error.message, issuerAddress });
             throw new Error(`Failed to remove issuer: ${error.message}`);
         }
     }
