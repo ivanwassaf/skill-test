@@ -235,6 +235,7 @@ const options = {
   apis: [
     './src/routes/**/*.js',
     './src/modules/**/*-controller.js',
+    './src/config/swagger-docs.js',
   ],
 };
 
