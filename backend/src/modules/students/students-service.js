@@ -1,6 +1,7 @@
 const { ApiError, sendAccountVerificationEmail } = require("../../utils");
-const { findAllStudents, findStudentDetail, findStudentToSetStatus, addOrUpdateStudent } = require("./students-repository");
+const { findAllStudents, countStudents, findStudentDetail, findStudentToSetStatus, addOrUpdateStudent } = require("./students-repository");
 const { findUserById } = require("../../shared/repository");
+const { buildPaginatedResponse } = require("../../utils/pagination");
 
 const checkStudentId = async (id) => {
     const isStudentFound = await findUserById(id);
@@ -10,8 +11,16 @@ const checkStudentId = async (id) => {
 }
 
 const getAllStudents = async (payload) => {
-    const students = await findAllStudents(payload);
-    return students;
+    const { page, limit } = payload;
+    
+    // Get students and total count in parallel for better performance
+    const [students, total] = await Promise.all([
+        findAllStudents(payload),
+        countStudents(payload)
+    ]);
+    
+    // Return paginated response with metadata
+    return buildPaginatedResponse(students, page, limit, total);
 }
 
 const getStudentDetail = async (id) => {

@@ -1,4 +1,5 @@
 const { processDBRequest } = require("../../utils");
+const { buildWhereClause } = require("../../utils/pagination");
 
 const getRoleId = async (roleName) => {
     const query = "SELECT id FROM roles WHERE name ILIKE $1";
@@ -7,40 +8,114 @@ const getRoleId = async (roleName) => {
     return rows[0].id;
 }
 
+/**
+ * Find all students with pagination and filtering
+ * Optimized with proper JOIN and indexed queries
+ */
 const findAllStudents = async (payload) => {
-    const { name, className, section, roll } = payload;
+    const { name, className, section, roll, page = 1, limit = 10, sortBy = 'id', sortOrder = 'ASC' } = payload;
+    
+    // Build base query with proper JOIN (not LEFT JOIN for better performance)
     let query = `
         SELECT
-            t1.id,
-            t1.name,
-            t1.email,
-            t1.last_login AS "lastLogin",
-            t1.is_active AS "systemAccess"
-        FROM users t1
-        LEFT JOIN user_profiles t3 ON t1.id = t3.user_id
-        WHERE t1.role_id = 3`;
+            u.id,
+            u.name,
+            u.email,
+            u.last_login AS "lastLogin",
+            u.is_active AS "systemAccess",
+            p.class_name AS "className",
+            p.section_name AS "sectionName",
+            p.roll
+        FROM users u
+        INNER JOIN user_profiles p ON u.id = p.user_id
+        WHERE u.role_id = 3`;
+    
     let queryParams = [];
+    let paramIndex = 1;
+    
+    // Add filters dynamically
     if (name) {
-        query += ` AND t1.name = $${queryParams.length + 1}`;
-        queryParams.push(name);
+        query += ` AND u.name ILIKE $${paramIndex}`;
+        queryParams.push(`%${name}%`); // Allow partial matching
+        paramIndex++;
     }
     if (className) {
-        query += ` AND t3.class_name = $${queryParams.length + 1}`;
+        query += ` AND p.class_name = $${paramIndex}`;
         queryParams.push(className);
+        paramIndex++;
     }
     if (section) {
-        query += ` AND t3.section_name = $${queryParams.length + 1}`;
+        query += ` AND p.section_name = $${paramIndex}`;
         queryParams.push(section);
+        paramIndex++;
     }
     if (roll) {
-        query += ` AND t3.roll = $${queryParams.length + 1}`;
+        query += ` AND p.roll = $${paramIndex}`;
         queryParams.push(roll);
+        paramIndex++;
     }
 
-    query += ' ORDER BY t1.id';
+    // Add sorting and pagination
+    const offset = (page - 1) * limit;
+    const allowedSortFields = ['id', 'name', 'email', 'lastLogin', 'className', 'roll'];
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'id';
+    const order = sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+    
+    // Map sortField to actual column names
+    const fieldMapping = {
+        'id': 'u.id',
+        'name': 'u.name',
+        'email': 'u.email',
+        'lastLogin': 'u.last_login',
+        'className': 'p.class_name',
+        'roll': 'p.roll'
+    };
+    
+    query += ` ORDER BY ${fieldMapping[sortField]} ${order} LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    queryParams.push(limit, offset);
 
     const { rows } = await processDBRequest({ query, queryParams });
     return rows;
+}
+
+/**
+ * Count total students with filtering (for pagination metadata)
+ */
+const countStudents = async (payload) => {
+    const { name, className, section, roll } = payload;
+    
+    let query = `
+        SELECT COUNT(*) as total
+        FROM users u
+        INNER JOIN user_profiles p ON u.id = p.user_id
+        WHERE u.role_id = 3`;
+    
+    let queryParams = [];
+    let paramIndex = 1;
+    
+    if (name) {
+        query += ` AND u.name ILIKE $${paramIndex}`;
+        queryParams.push(`%${name}%`);
+        paramIndex++;
+    }
+    if (className) {
+        query += ` AND p.class_name = $${paramIndex}`;
+        queryParams.push(className);
+        paramIndex++;
+    }
+    if (section) {
+        query += ` AND p.section_name = $${paramIndex}`;
+        queryParams.push(section);
+        paramIndex++;
+    }
+    if (roll) {
+        query += ` AND p.roll = $${paramIndex}`;
+        queryParams.push(roll);
+        paramIndex++;
+    }
+
+    const { rows } = await processDBRequest({ query, queryParams });
+    return parseInt(rows[0].total, 10);
 }
 
 const addOrUpdateStudent = async (payload) => {
@@ -114,6 +189,7 @@ const findStudentToUpdate = async (paylaod) => {
 module.exports = {
     getRoleId,
     findAllStudents,
+    countStudents,
     addOrUpdateStudent,
     findStudentDetail,
     findStudentToSetStatus,

@@ -2,34 +2,68 @@ const asyncHandler = require("express-async-handler");
 const { getAllStudents, addNewStudent, getStudentDetail, setStudentStatus, updateStudent } = require("./students-service");
 const axios = require('axios');
 const { logger } = require('../../config');
+const { parsePaginationParams, parseSortingParams, buildPaginatedResponse } = require('../../utils/pagination');
 
 /**
  * @swagger
  * /api/v1/students:
  *   get:
  *     summary: Get all students
- *     description: Retrieve a list of all students with optional filtering
+ *     description: Retrieve a paginated list of all students with optional filtering and sorting
  *     tags: [Students]
  *     security:
  *       - bearerAuth: []
  *       - cookieAuth: []
  *     parameters:
  *       - in: query
- *         name: class_id
+ *         name: page
  *         schema:
  *           type: integer
- *         description: Filter by class ID
+ *           default: 1
+ *           minimum: 1
+ *         description: Page number for pagination
  *       - in: query
- *         name: section_id
+ *         name: limit
  *         schema:
  *           type: integer
- *         description: Filter by section ID
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Number of items per page
  *       - in: query
- *         name: status
+ *         name: sortBy
  *         schema:
  *           type: string
- *           enum: [active, inactive]
- *         description: Filter by student status
+ *           enum: [id, name, email, lastLogin, className, roll]
+ *           default: id
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: ASC
+ *         description: Sort order
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         description: Filter by student name (partial match)
+ *       - in: query
+ *         name: className
+ *         schema:
+ *           type: string
+ *         description: Filter by class name
+ *       - in: query
+ *         name: section
+ *         schema:
+ *           type: string
+ *         description: Filter by section name
+ *       - in: query
+ *         name: roll
+ *         schema:
+ *           type: string
+ *         description: Filter by roll number
  *     responses:
  *       200:
  *         description: List of students retrieved successfully
@@ -41,19 +75,65 @@ const { logger } = require('../../config');
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 students:
+ *                 data:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Student'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     currentPage:
+ *                       type: integer
+ *                       example: 1
+ *                     itemsPerPage:
+ *                       type: integer
+ *                       example: 10
+ *                     totalItems:
+ *                       type: integer
+ *                       example: 150
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 15
+ *                     hasNextPage:
+ *                       type: boolean
+ *                       example: true
+ *                     hasPreviousPage:
+ *                       type: boolean
+ *                       example: false
+ *                     nextPage:
+ *                       type: integer
+ *                       example: 2
+ *                     previousPage:
+ *                       type: integer
+ *                       example: null
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
 const handleGetAllStudents = asyncHandler(async (req, res) => {
-    const payload = req.query;
-    const students = await getAllStudents(payload);
-    res.json({ students });
+    // Parse pagination and sorting parameters
+    const pagination = parsePaginationParams(req.query, { defaultLimit: 10, maxLimit: 100 });
+    const sorting = parseSortingParams(
+        req.query, 
+        ['id', 'name', 'email', 'lastLogin', 'className', 'roll'],
+        'id',
+        'ASC'
+    );
+    
+    // Get filters
+    const { name, className, section, roll } = req.query;
+    const filters = { name, className, section, roll };
+    
+    // Create payload with pagination, sorting, and filters
+    const payload = {
+        ...filters,
+        ...pagination,
+        ...sorting
+    };
+    
+    const result = await getAllStudents(payload);
+    res.json(result);
 });
 
 /**
