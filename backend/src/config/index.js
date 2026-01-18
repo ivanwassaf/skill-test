@@ -4,6 +4,7 @@ const { env } = require("./env");
 const logger = require("./logger");
 const { validateEnv, getConfig } = require("./env-validator");
 const redis = require("./redis");
+const dbPool = require("./db-pool");
 
 module.exports = {
   cors: corsPolicy,
@@ -13,8 +14,5 @@ module.exports = {
   validateEnv,
   getConfig,
   redis,
-};
-  logger,
-  validateEnv,
-  getConfig,
+  dbPool,
 };
