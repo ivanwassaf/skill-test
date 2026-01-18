@@ -33,7 +33,7 @@ class BlockchainService {
             this.wallet = new ethers.Wallet(privateKey, this.provider);
 
             // Load contract ABI
-            const abiPath = path.join(__dirname, '../../../../blockchain/deployments/StudentCertificate.abi.json');
+            const abiPath = path.join(__dirname, '../../../StudentCertificate.abi.json');
             
             if (!fs.existsSync(abiPath)) {
                 console.warn('⚠️  Contract ABI not found. Deploy the contract first.');
