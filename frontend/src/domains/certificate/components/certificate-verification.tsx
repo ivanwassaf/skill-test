@@ -92,7 +92,7 @@ export const CertificateVerification: React.FC = () => {
                         Invalid Certificate
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {data.message || 'Certificate not found or has been revoked'}
+                        Certificate not found or has been revoked
                       </Typography>
                     </Box>
                   </>
