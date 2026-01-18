@@ -1,6 +1,6 @@
 const blockchainService = require('./blockchain-service');
 const ipfsService = require('./ipfs-service');
-const { studentsRepository } = require('../students');
+const { findStudentDetail } = require('../students/students-repository');
 
 /**
  * Issue a certificate for a student
@@ -26,7 +26,7 @@ const handleIssueCertificate = async (req, res) => {
         }
 
         // Get student details
-        const student = await studentsRepository.getStudentById(studentId);
+        const student = await findStudentDetail(studentId);
         if (!student) {
             return res.status(404).json({
                 success: false,
@@ -34,17 +34,9 @@ const handleIssueCertificate = async (req, res) => {
             });
         }
 
-        // Check if IPFS is configured
-        if (!ipfsService.isConfigured()) {
-            return res.status(503).json({
-                success: false,
-                message: 'IPFS service not configured. Please set PINATA credentials.'
-            });
-        }
-
-        // Upload metadata to IPFS
+        // Prepare metadata
         const metadata = {
-            studentName: `${student.first_name} ${student.last_name}`,
+            studentName: student.name,
             studentEmail: student.email,
             studentId: studentId,
             certificateType: certificateType,
@@ -55,19 +47,34 @@ const handleIssueCertificate = async (req, res) => {
             additionalInfo: additionalInfo || {}
         };
 
-        const ipfsResult = await ipfsService.uploadCertificateMetadata(metadata);
+        // Upload metadata to IPFS (optional)
+        let ipfsResult = null;
+        if (ipfsService.isConfigured()) {
+            try {
+                ipfsResult = await ipfsService.uploadCertificateMetadata(metadata);
+            } catch (error) {
+                console.warn('⚠️  IPFS upload failed, continuing without IPFS:', error.message);
+            }
+        }
 
         // Issue certificate on blockchain
         // Note: For blockchain we need student's wallet address
-        // If not available, we can use a placeholder or generate one
-        const studentAddress = student.wallet_address || '0x0000000000000000000000000000000000000000';
+        // If not available, generate a deterministic address based on student ID
+        let studentAddress = student.wallet_address;
+        if (!studentAddress) {
+            // Generate a deterministic Ethereum address from student ID
+            // This creates a valid address format but is NOT a real wallet
+            const crypto = require('crypto');
+            const hash = crypto.createHash('sha256').update(`student_${studentId}`).digest('hex');
+            studentAddress = '0x' + hash.substring(0, 40); // Take first 20 bytes (40 hex chars)
+        }
         
         const blockchainResult = await blockchainService.issueCertificate(
             studentAddress,
             metadata.studentName,
             metadata.studentEmail,
             certificateType,
-            ipfsResult.ipfsHash
+            ipfsResult?.ipfsHash || ''
         );
 
         res.status(201).json({
@@ -75,8 +82,8 @@ const handleIssueCertificate = async (req, res) => {
             message: 'Certificate issued successfully',
             data: {
                 certificateId: blockchainResult.certificateId,
-                ipfsHash: ipfsResult.ipfsHash,
-                ipfsUrl: ipfsResult.url,
+                ipfsHash: ipfsResult?.ipfsHash || null,
+                ipfsUrl: ipfsResult?.url || null,
                 transactionHash: blockchainResult.transactionHash,
                 blockNumber: blockchainResult.blockNumber,
                 student: {
@@ -195,7 +202,7 @@ const handleGetStudentCertificates = async (req, res) => {
         const { studentId } = req.params;
 
         // Get student details
-        const student = await studentsRepository.getStudentById(studentId);
+        const student = await findStudentDetail(studentId);
         if (!student) {
             return res.status(404).json({
                 success: false,
