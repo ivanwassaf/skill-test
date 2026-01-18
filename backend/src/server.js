@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { validateEnv, logger } = require("./config");
+const { validateEnv, logger, redis } = require("./config");
 
 // Validate environment variables before starting
 try {
@@ -14,22 +14,36 @@ const { blockchainService } = require("./modules/certificates");
 
 const PORT = env.PORT;
 
-// Initialize blockchain service (optional - won't crash if not configured)
-blockchainService.initialize().then((initialized) => {
-  if (initialized) {
-    logger.info('🔗 Blockchain service ready');
-  } else {
-    logger.info('ℹ️  Blockchain service not configured (optional feature)');
+// Initialize services
+async function initializeServices() {
+  // Initialize Redis cache (optional)
+  try {
+    await redis.initializeRedis();
+  } catch (error) {
+    logger.warn('Redis initialization failed, continuing without cache');
   }
-}).catch(err => {
-  logger.warn('⚠️  Blockchain initialization error:', err.message);
-});
+
+  // Initialize blockchain service (optional)
+  try {
+    const initialized = await blockchainService.initialize();
+    if (initialized) {
+      logger.info('🔗 Blockchain service ready');
+    } else {
+      logger.info('ℹ️  Blockchain service not configured (optional feature)');
+    }
+  } catch (err) {
+    logger.warn('⚠️  Blockchain initialization error:', err.message);
+  }
+}
 
 // Start server
-app.listen(PORT, () => {
-  logger.info(`🚀 Server running on port ${PORT}`);
-  logger.info(`📊 Environment: ${process.env.NODE_ENV}`);
-  logger.info(`🌐 API URL: ${process.env.API_URL}`);
+initializeServices().then(() => {
+  app.listen(PORT, () => {
+    logger.info(`🚀 Server running on port ${PORT}`);
+    logger.info(`📊 Environment: ${process.env.NODE_ENV}`);
+    logger.info(`🌐 API URL: ${process.env.API_URL}`);
+    logger.info(`💾 Redis cache: ${redis.isRedisConnected() ? 'enabled' : 'disabled'}`);
+  });
 });
 
 // Handle unhandled promise rejections
@@ -49,12 +63,14 @@ process.on('uncaughtException', (error) => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received. Shutting down gracefully...');
+async function gracefulShutdown(signal) {
+  logger.info(`${signal} received. Shutting down gracefully...`);
+  
+  // Close Redis connection
+  await redis.closeRedis();
+  
   process.exit(0);
-});
+}
 
-process.on('SIGINT', () => {
-  logger.info('SIGINT received. Shutting down gracefully...');
-  process.exit(0);
-});
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
