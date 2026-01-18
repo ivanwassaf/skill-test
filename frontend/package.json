@@ -10,8 +10,7 @@
     "lint:fix": "npm run lint -- --fix",
     "prettier": "prettier . --ext ts,tsx --check",
     "prettier:fix": "npm run prettier -- --write",
-    "format": "npm run prettier:fix && npm run lint:fix",
-    "prepare": "husky && husky install"
+    "format": "npm run prettier:fix && npm run lint:fix"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
@@ -24,7 +23,6 @@
     "@mui/x-date-pickers": "^7.18.0",
     "@reduxjs/toolkit": "^2.2.5",
     "@types/redux-persist": "^4.3.1",
-    "@web3modal/wagmi": "^5.1.0",
     "date-fns": "^3.6.0",
     "ethers": "^6.9.0",
     "js-cookie": "^3.0.5",
