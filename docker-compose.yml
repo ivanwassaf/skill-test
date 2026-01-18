@@ -46,6 +46,10 @@ services:
       API_URL: http://localhost:5007
       COOKIE_DOMAIN: localhost
       NODE_ENV: production
+      BLOCKCHAIN_NETWORK: localhost
+      BLOCKCHAIN_PRIVATE_KEY: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+      BLOCKCHAIN_CONTRACT_ADDRESS: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+      LOCALHOST_RPC_URL: http://host.docker.internal:8545
     ports:
       - "5007:5007"
     depends_on:
