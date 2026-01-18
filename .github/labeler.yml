@@ -1,0 +1,85 @@
+# Automatic PR labeling based on changed files
+
+# Backend changes
+backend:
+  - backend/**/*
+
+# Frontend changes
+frontend:
+  - frontend/**/*
+
+# Database changes
+database:
+  - backend/migrations/**/*
+  - backend/src/**/*repository.js
+  - seed_db/**/*
+
+# API changes
+api:
+  - backend/src/routes/**/*
+  - backend/src/modules/**/*-router.js
+  - backend/src/modules/**/*-controller.js
+
+# Configuration changes
+config:
+  - '**/.env*'
+  - '**/config/**/*'
+  - '**/*.config.js'
+  - '**/*.config.ts'
+
+# Documentation changes
+documentation:
+  - '**/*.md'
+  - docs/**/*
+  - .github/**/*.md
+
+# CI/CD changes
+ci/cd:
+  - .github/workflows/**/*
+  - .github/dependabot.yml
+  - '**/Dockerfile'
+  - docker-compose.yml
+
+# Dependencies changes
+dependencies:
+  - '**/package.json'
+  - '**/package-lock.json'
+
+# Tests changes
+tests:
+  - '**/test/**/*'
+  - '**/*.test.js'
+  - '**/*.test.ts'
+  - '**/*.spec.js'
+  - '**/*.spec.ts'
+
+# Security changes
+security:
+  - backend/src/middlewares/authenticate*.js
+  - backend/src/middlewares/csrf*.js
+  - backend/src/utils/*password*.js
+  - backend/src/utils/jwt*.js
+
+# Blockchain changes
+blockchain:
+  - blockchain/**/*
+  - backend/src/modules/certificates/blockchain*.js
+  - backend/src/modules/certificates/ipfs*.js
+
+# UI changes
+ui:
+  - frontend/src/components/**/*
+  - frontend/src/assets/**/*
+  - '**/*.css'
+  - '**/*.scss'
+
+# Performance changes
+performance:
+  - backend/src/middlewares/cache*.js
+  - backend/src/config/redis.js
+  - '**/optimization/**/*'
+
+# Bug fix
+bug:
+  - any: ['fix', 'Fix', 'FIX']
+    all-globs-to-all-files: true

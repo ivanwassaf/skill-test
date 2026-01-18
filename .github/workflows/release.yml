@@ -1,0 +1,160 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get version from tag
+      id: get_version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "📦 Version: $VERSION"
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+        if [ -z "$PREVIOUS_TAG" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+        else
+          CHANGELOG=$(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges)
+        fi
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ steps.get_version.outputs.version }}
+        body: |
+          ## What's Changed
+          
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ## Installation
+          
+          ### Backend
+          ```bash
+          npm install
+          npm start
+          ```
+          
+          ### Frontend
+          ```bash
+          npm install
+          npm run build
+          ```
+          
+          ## Docker
+          ```bash
+          docker pull ${{ secrets.DOCKER_USERNAME }}/school-mgmt-backend:${{ steps.get_version.outputs.version }}
+          docker pull ${{ secrets.DOCKER_USERNAME }}/school-mgmt-frontend:${{ steps.get_version.outputs.version }}
+          ```
+        draft: false
+        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+
+  build-and-publish:
+    name: Build and Publish Docker Images
+    runs-on: ubuntu-latest
+    needs: create-release
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get version
+      id: get_version
+      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Backend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/school-mgmt-backend:${{ steps.get_version.outputs.version }}
+          ${{ secrets.DOCKER_USERNAME }}/school-mgmt-backend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          VERSION=${{ steps.get_version.outputs.version }}
+
+    - name: Build and push Frontend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/school-mgmt-frontend:${{ steps.get_version.outputs.version }}
+          ${{ secrets.DOCKER_USERNAME }}/school-mgmt-frontend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          VERSION=${{ steps.get_version.outputs.version }}
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-and-publish
+    environment:
+      name: production
+      url: https://yourapp.com
+    
+    steps:
+    - name: Deployment notification
+      run: |
+        echo "🚀 Deploying version ${{ needs.build-and-publish.outputs.version }} to production"
+
+    # Add your production deployment steps here
+    # Examples:
+    # - Update Kubernetes manifests
+    # - Trigger deployment webhook
+    # - Update AWS ECS task definition
+    # - Deploy to cloud platform
+
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [create-release, build-and-publish]
+    if: always()
+    
+    steps:
+    - name: Send release notification
+      run: |
+        echo "📢 Release ${{ github.ref }} completed"
+        echo "Status: ${{ job.status }}"
+        
+    # Add notification integrations:
+    # - Send Slack message
+    # - Post to Discord
+    # - Email stakeholders
+    # - Update status page
