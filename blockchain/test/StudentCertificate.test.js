@@ -285,4 +285,69 @@ describe("StudentCertificate", function () {
       expect(certs[1]).to.equal(2);
     });
   });
+
+  describe("Optional IPFS Hash", function () {
+    it("Should allow issuing certificate with empty IPFS hash", async function () {
+      const { certificate, student } = await loadFixture(deployStudentCertificateFixture);
+      
+      await expect(
+        certificate.issueCertificate(
+          student.address,
+          "John Doe",
+          "john@example.com",
+          "Excellence",
+          ""
+        )
+      ).to.not.be.reverted;
+      
+      const cert = await certificate.getCertificate(1);
+      expect(cert.ipfsHash).to.equal("");
+    });
+
+    it("Should allow multiple certificates with empty IPFS hash", async function () {
+      const { certificate, student } = await loadFixture(deployStudentCertificateFixture);
+      
+      await certificate.issueCertificate(
+        student.address,
+        "John Doe",
+        "john@example.com",
+        "Excellence",
+        ""
+      );
+      
+      await expect(
+        certificate.issueCertificate(
+          student.address,
+          "Jane Doe",
+          "jane@example.com",
+          "Achievement",
+          ""
+        )
+      ).to.not.be.reverted;
+      
+      expect(await certificate.getTotalCertificates()).to.equal(2);
+    });
+
+    it("Should still reject duplicate non-empty IPFS hash", async function () {
+      const { certificate, student } = await loadFixture(deployStudentCertificateFixture);
+      
+      await certificate.issueCertificate(
+        student.address,
+        "John Doe",
+        "john@example.com",
+        "Excellence",
+        "QmHash123"
+      );
+      
+      await expect(
+        certificate.issueCertificate(
+          student.address,
+          "Jane Doe",
+          "jane@example.com",
+          "Achievement",
+          "QmHash123"
+        )
+      ).to.be.revertedWith("Certificate already exists");
+    });
+  });
 });
