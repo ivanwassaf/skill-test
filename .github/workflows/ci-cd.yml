@@ -154,16 +154,18 @@ jobs:
     - name: Setup test environment
       working-directory: backend
       run: |
-        cp .env .env.test
-        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/school_mgmt_test" >> .env.test
+        cp .env .env.test || true
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/school_mgmt_test" > .env.test
         echo "REDIS_ENABLED=true" >> .env.test
         echo "REDIS_URL=redis://localhost:6379" >> .env.test
         echo "NODE_ENV=test" >> .env.test
 
-    - name: Run database migrations (if exists)
-      working-directory: backend
-      run: npm run migrate || echo "No migrations configured"
-      continue-on-error: true
+    - name: Setup test database
+      run: |
+        # Create tables
+        PGPASSWORD=postgres psql -h localhost -U postgres -d school_mgmt_test -f seed_db/tables.sql
+        # Seed test data
+        PGPASSWORD=postgres psql -h localhost -U postgres -d school_mgmt_test -f seed_db/seed-db.sql
 
     - name: Run integration tests
       working-directory: backend
@@ -215,6 +217,13 @@ jobs:
     - name: Install dependencies
       working-directory: backend
       run: npm ci
+
+    - name: Setup test database
+      run: |
+        # Create tables
+        PGPASSWORD=postgres psql -h localhost -U postgres -d school_mgmt_test -f seed_db/tables.sql
+        # Seed test data
+        PGPASSWORD=postgres psql -h localhost -U postgres -d school_mgmt_test -f seed_db/seed-db.sql
 
     - name: Run tests with coverage
       working-directory: backend
