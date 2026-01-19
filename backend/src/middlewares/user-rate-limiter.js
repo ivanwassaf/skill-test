@@ -79,8 +79,14 @@ const userBasedStore = {
  * User-based rate limiter configuration
  * Note: Simplified to avoid IPv6 key generator issues
  * Uses default express-rate-limit behavior for IP handling
+ * Disabled in test environment
  */
 const createUserRateLimiter = (options = {}) => {
+  // Skip rate limiting in test environment
+  if (process.env.NODE_ENV === 'test') {
+    return (req, res, next) => next();
+  }
+
   const {
     windowMs = 15 * 60 * 1000, // 15 minutes
     maxRequestsAuthenticated = 1000, // Higher limit for authenticated users
@@ -110,28 +116,31 @@ const createUserRateLimiter = (options = {}) => {
 /**
  * Strict rate limiter for sensitive operations
  * (login, password reset, etc.)
+ * Disabled in test environment to allow integration tests
  */
-const strictRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Only 5 attempts
-  handler: (req, res) => {
-    logger.warn(`Strict rate limit exceeded`, {
-      email: req.body?.email,
-      ip: req.ip,
-      path: req.path,
-    });
-    
-    res.status(429).json({
-      success: false,
-      error: {
-        code: 'TOO_MANY_ATTEMPTS',
-        message: 'Too many attempts. Please try again in 15 minutes.',
+const strictRateLimiter = process.env.NODE_ENV === 'test' 
+  ? (req, res, next) => next() // Skip rate limiting in tests
+  : rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 5, // Only 5 attempts
+      handler: (req, res) => {
+        logger.warn(`Strict rate limit exceeded`, {
+          email: req.body?.email,
+          ip: req.ip,
+          path: req.path,
+        });
+        
+        res.status(429).json({
+          success: false,
+          error: {
+            code: 'TOO_MANY_ATTEMPTS',
+            message: 'Too many attempts. Please try again in 15 minutes.',
+          },
+        });
       },
+      standardHeaders: true,
+      legacyHeaders: false,
     });
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
 
 /**
  * Get current rate limit status for a user
