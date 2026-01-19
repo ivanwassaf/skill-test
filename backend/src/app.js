@@ -15,18 +15,40 @@ const path = require("path");
 
 const app = express();
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-  crossOriginEmbedderPolicy: false,
+// Serve static files BEFORE security middleware to set proper CORS headers
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  setHeaders: (res, path) => {
+    res.setHeader('Access-Control-Allow-Origin', process.env.UI_URL || 'http://localhost');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
 }));
+
+// Security middleware - configure Helmet without CORP
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    scriptSrc: ["'self'"],
+    imgSrc: ["'self'", "data:", "https:", "http://localhost"],
+  },
+}));
+app.use(helmet.dnsPrefetchControl());
+app.use(helmet.frameguard());
+app.use(helmet.hidePoweredBy());
+app.use(helmet.hsts());
+app.use(helmet.ieNoOpen());
+app.use(helmet.noSniff());
+app.use(helmet.referrerPolicy());
+app.use(helmet.xssFilter());
+// Skip crossOriginResourcePolicy - we'll set it manually
+
+// Set CORP header manually to allow cross-origin
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
 
 // HTTP request logging
 app.use(morgan('combined', { stream: logger.stream }));
@@ -35,7 +57,6 @@ app.use(morgan('combined', { stream: logger.stream }));
 app.use(cors);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(cookieParser());
 
 // User-based rate limiting (applied after authentication middleware in routes)
