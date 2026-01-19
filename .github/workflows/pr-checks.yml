@@ -74,9 +74,16 @@ jobs:
       with:
         node-version: '18.x'
 
+    - name: Clear npm cache
+      working-directory: frontend
+      run: npm cache clean --force
+
     - name: Install frontend dependencies
       working-directory: frontend
-      run: npm ci
+      run: |
+        # Fix for Rollup optional dependencies issue in GitHub Actions
+        # See: https://github.com/npm/cli/issues/4828
+        npm install --legacy-peer-deps
 
     - name: Build frontend
       working-directory: frontend
