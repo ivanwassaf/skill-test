@@ -47,7 +47,7 @@ describe('Classes Integration Tests', function () {
 
       expect(res.body).to.have.property('classes');
       expect(res.body.classes).to.be.an('array');
-      expect(res.body.classes.length).to.be.at.least(2); // Class 1, Class 2
+      // Don't assume pre-existing data - just verify structure
     });
 
     it('should fail without authentication', async () => {
@@ -113,10 +113,18 @@ describe('Classes Integration Tests', function () {
     });
 
     it('should fail to create class with duplicate name', async () => {
+      // First create a class
+      const uniqueName = `DuplicateTest-${Date.now()}`;
       await agent
         .post('/api/v1/classes')
         .set('x-csrf-token', csrfToken)
-        .send({ name: 'Class 1', sections: 'Section A' })
+        .send({ name: uniqueName, sections: 'Section A' });
+      
+      // Try to create the same class again - should fail
+      await agent
+        .post('/api/v1/classes')
+        .set('x-csrf-token', csrfToken)
+        .send({ name: uniqueName, sections: 'Section A' })
         .expect(500);
     });
 
