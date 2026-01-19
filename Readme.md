@@ -127,8 +127,6 @@ A comprehensive full-stack web application for managing school operations includ
 
 **Production Safety**: ✅ `npm audit --omit=dev` shows vulnerabilities, but they're in packages excluded from production builds
 
-**Note**: VSCode may show 600+ "problems" - these are internal PLANEXWARE linter warnings about package homologation, not actual code errors.
-
 ### 📈 Test Coverage Summary
 ```
 Integration Tests: 83/88 passing (94.3%)
@@ -535,20 +533,7 @@ Visit **http://localhost:5007/api-docs** for full interactive Swagger UI documen
 ## � Troubleshooting ⭐ NEW
 
 ### Common Issues
-#### VSCode Shows 631 "Problems"
-**This is NORMAL** - These are internal PLANEXWARE governance warnings about package homologation.
-- ✅ NOT real errors - code works correctly
-- ✅ Application functions normally
-- ✅ Tests pass successfully
-- See `VSCODE_PROBLEMS_EXPLAINED.md` for detailed explanation
 
-To hide them:
-```json
-// Add to .vscode/settings.json
-{
-  "problems.decorations.enabled": false
-}
-```
 
 #### npm Shows Vulnerabilities
 **Status**: 7 vulnerabilities (all in dev dependencies only)
