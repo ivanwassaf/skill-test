@@ -306,6 +306,7 @@ jobs:
       run: npm run build
       env:
         VITE_API_URL: ${{ secrets.VITE_API_URL || 'http://localhost:5007' }}
+        NODE_OPTIONS: '--max-old-space-size=4096'
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
