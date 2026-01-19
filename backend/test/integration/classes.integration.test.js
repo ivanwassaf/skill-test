@@ -3,7 +3,13 @@ const { expect } = require('chai');
 const { app } = require('../../src/app');
 
 function extractCsrfToken(cookies) {
+  if (!cookies || !Array.isArray(cookies)) {
+    throw new Error('No cookies received from login');
+  }
   const csrfCookie = cookies.find(cookie => cookie.startsWith('csrfToken=') && !cookie.includes('1970'));
+  if (!csrfCookie) {
+    throw new Error('CSRF token not found in cookies');
+  }
   return decodeURIComponent(csrfCookie.split(';')[0].split('=')[1]);
 }
 
@@ -22,6 +28,10 @@ describe('Classes Integration Tests', function () {
         username: 'admin@test.com',
         password: 'Test@1234'
       });
+
+    if (loginRes.status !== 200) {
+      throw new Error(`Login failed with status ${loginRes.status}: ${JSON.stringify(loginRes.body)}`);
+    }
 
     const cookies = loginRes.headers['set-cookie'];
     csrfToken = extractCsrfToken(cookies);

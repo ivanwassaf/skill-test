@@ -3,7 +3,13 @@ const { expect } = require('chai');
 const { app } = require('../../src/app');
 
 function extractCsrfToken(cookies) {
+  if (!cookies || !Array.isArray(cookies)) {
+    throw new Error('No cookies received from login');
+  }
   const csrfCookie = cookies.find(cookie => cookie.startsWith('csrfToken=') && !cookie.includes('1970'));
+  if (!csrfCookie) {
+    throw new Error('CSRF token not found in cookies');
+  }
   return decodeURIComponent(csrfCookie.split(';')[0].split('=')[1]);
 }
 

@@ -5,9 +5,9 @@ const morgan = require("morgan");
 const swaggerUi = require("swagger-ui-express");
 const dotenv = require("dotenv");
 
-// Load .env.test if NODE_ENV is test, otherwise load .env
-const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
-dotenv.config({ path: envFile });
+// Load environment variables
+dotenv.config();
+
 
 const { handle404Error, handleGlobalError } = require("./middlewares");
 const { createUserRateLimiter, strictRateLimiter, getRateLimitStatus } = require("./middlewares/user-rate-limiter");
