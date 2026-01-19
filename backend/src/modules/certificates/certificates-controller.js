@@ -1,6 +1,7 @@
 const blockchainService = require('./blockchain-service');
 const ipfsService = require('./ipfs-service');
 const { findStudentDetail } = require('../students/students-repository');
+const { logger } = require('../../config');
 
 /**
  * Issue a certificate for a student
