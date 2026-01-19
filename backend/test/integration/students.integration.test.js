@@ -38,9 +38,10 @@ describe('Students Integration Tests', function () {
         .expect('Content-Type', /json/)
         .expect(200);
 
-      expect(res.body).to.have.property('data');
-      expect(res.body.data).to.be.an('array');
+      expect(res.body).to.have.property('students');
+      expect(res.body.students).to.be.an('array');
       expect(res.body).to.have.property('pagination');
+      expect(res.body.students.length).to.be.at.least(3); // Ben, Raul, Test Student
     });
 
     it('should fail to get students without authentication', async () => {
@@ -64,8 +65,8 @@ describe('Students Integration Tests', function () {
         .get('/api/v1/students')
         .set('x-csrf-token', csrfToken);
 
-      if (studentsRes.body.data && studentsRes.body.data.length > 0) {
-        const studentId = studentsRes.body.data[0].id;
+      if (studentsRes.body.students && studentsRes.body.students.length > 0) {
+        const studentId = studentsRes.body.students[0].id;
 
         const res = await agent
           .get(`/api/v1/students/${studentId}`)
@@ -176,47 +177,50 @@ describe('Students Integration Tests', function () {
     });
   });
 
-  describe('DELETE /api/v1/students/:id', () => {
-    it('should delete an existing student', function() {
-      if (!createdStudentId) {
-        this.skip();
-        return;
+  describe('POST /api/v1/students/:id/status', () => {
+    it('should change student status (disable/enable)', async () => {
+      // Get an existing student
+      const studentsRes = await agent
+        .get('/api/v1/students')
+        .set('x-csrf-token', csrfToken);
+
+      if (studentsRes.body.students && studentsRes.body.students.length > 0) {
+        const studentId = studentsRes.body.students[0].id;
+        const currentStatus = studentsRes.body.students[0].systemAccess;
+
+        const res = await agent
+          .post(`/api/v1/students/${studentId}/status`)
+          .set('x-csrf-token', csrfToken)
+          .send({ status: !currentStatus })
+          .expect('Content-Type', /json/)
+          .expect(200);
+
+        expect(res.body).to.have.property('message');
       }
-
-      return agent
-        .delete(`/api/v1/students/${createdStudentId}`)
-        .set('x-csrf-token', csrfToken)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .then(res => {
-          expect(res.body).to.have.property('success', true);
-
-          // Verify student is deleted
-          return agent
-            .get(`/api/v1/students/${createdStudentId}`)
-            .set('x-csrf-token', csrfToken)
-            .expect(404);
-        });
     });
 
-    it('should fail to delete non-existent student', async () => {
+    it('should fail to change status of non-existent student', async () => {
       await agent
-        .delete('/api/v1/students/99999')
+        .post('/api/v1/students/99999/status')
         .set('x-csrf-token', csrfToken)
+        .send({ status: false })
         .expect(404);
     });
   });
 
-  describe('Student CRUD Flow', () => {
-    it('should complete full create -> read -> update -> delete flow', async () => {
+  describe('Student CRUD Flow (Create-Read-Update-Status)', () => {
+    it('should complete full create -> read -> update -> change status flow', async () => {
       // Step 1: Create
       const newStudent = {
-        name: 'CRUD Flow',
+        name: 'CRUD Flow Test',
         email: `crud.flow.${Date.now()}@example.com`,
         dob: '2005-01-01',
         currentAddress: '123 CRUD Street',
         phone: '5555555555',
-        gender: 'Male'
+        gender: 'Male',
+        className: 'Class 1',
+        sectionName: 'Section 1',
+        roll: 999
       };
 
       const createRes = await agent
@@ -226,53 +230,60 @@ describe('Students Integration Tests', function () {
         .expect(200);
 
       expect(createRes.body).to.have.property('message');
+      expect(createRes.body.message).to.include('Student added');
 
-      // Since userId is not returned, fetch the student by email
-      // Use a high limit to ensure we get the newly created student
+      // Step 2: Find the created student
       const allStudentsRes = await agent
         .get('/api/v1/students?limit=100&sortBy=id&sortOrder=DESC')
         .set('x-csrf-token', csrfToken)
         .expect(200);
 
-      const createdStudent = allStudentsRes.body.data.find(s => s.email === newStudent.email);
-      if (!createdStudent) {
-        throw new Error('Created student not found in students list');
-      }
+      expect(allStudentsRes.body).to.have.property('students');
+      const createdStudent = allStudentsRes.body.students.find(s => s.email === newStudent.email);
+      expect(createdStudent).to.exist;
       const studentId = createdStudent.id;
 
-      // Step 2: Read
+      // Step 3: Read - Get student detail
       const readRes = await agent
         .get(`/api/v1/students/${studentId}`)
         .set('x-csrf-token', csrfToken)
         .expect(200);
 
       expect(readRes.body).to.have.property('email', newStudent.email);
+      expect(readRes.body).to.have.property('name', newStudent.name);
 
-      // Step 3: Update
+      // Step 4: Update - Modify student data
       const updateRes = await agent
         .put(`/api/v1/students/${studentId}`)
         .set('x-csrf-token', csrfToken)
-        .send({ userId: studentId, name: 'Updated CRUD', email: newStudent.email })
+        .send({ 
+          userId: studentId, 
+          name: 'Updated CRUD Name',
+          email: newStudent.email,
+          phone: '9999999999'
+        })
         .expect(200);
 
       expect(updateRes.body).to.have.property('message');
+      expect(updateRes.body.message).to.include('updated');
 
-      // Step 4: Delete
-      // Note: Students might not be deletable in all cases (depends on business rules)
-      const deleteRes = await agent
-        .delete(`/api/v1/students/${studentId}`)
-        .set('x-csrf-token', csrfToken);
-      
-      // Accept either 200 (deleted) or 404 (not found/not deletable)
-      expect([200, 404]).to.include(deleteRes.status);
+      // Step 5: Verify update
+      const verifyRes = await agent
+        .get(`/api/v1/students/${studentId}`)
+        .set('x-csrf-token', csrfToken)
+        .expect(200);
 
-      // Step 5: Verify deletion (only if delete was successful)
-      if (deleteRes.status === 200) {
-        await agent
-          .get(`/api/v1/students/${studentId}`)
-          .set('x-csrf-token', csrfToken)
-          .expect(404);
-      }
+      expect(verifyRes.body).to.have.property('name', 'Updated CRUD Name');
+
+      // Step 6: Change status (disable student)
+      const statusRes = await agent
+        .post(`/api/v1/students/${studentId}/status`)
+        .set('x-csrf-token', csrfToken)
+        .send({ status: false })
+        .expect(200);
+
+      expect(statusRes.body).to.have.property('message');
+      expect(statusRes.body.message).to.include('status changed');
     });
   });
 });
