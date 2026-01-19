@@ -112,6 +112,10 @@ const getNewAccessAndCsrfToken = async (refreshToken) => {
   try {
     await client.query("BEGIN");
 
+    if (!refreshToken) {
+      throw new ApiError(401, "Invalid refresh token");
+    }
+
     const decodedToken = verifyToken(
       refreshToken,
       env.JWT_REFRESH_TOKEN_SECRET

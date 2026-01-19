@@ -108,7 +108,14 @@ const handleIssueCertificate = async (req, res) => {
  */
 const handleVerifyCertificate = async (req, res) => {
     try {
-        const { certificateId } = req.params;
+        const { certificateId } = req.body;
+
+        if (!certificateId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Certificate ID is required'
+            });
+        }
 
         if (!blockchainService.isInitialized()) {
             return res.status(503).json({
@@ -122,8 +129,11 @@ const handleVerifyCertificate = async (req, res) => {
         if (!isValid) {
             return res.status(200).json({
                 success: true,
-                valid: false,
-                message: 'Certificate not found or has been revoked'
+                data: {
+                    valid: false,
+                    certificateId: certificateId,
+                    message: 'Certificate not found or has been revoked'
+                }
             });
         }
 
@@ -132,21 +142,24 @@ const handleVerifyCertificate = async (req, res) => {
         // Get metadata from IPFS
         let metadata = null;
         try {
-            metadata = await ipfsService.getCertificateMetadata(certificate.ipfsHash);
+            if (certificate && certificate.ipfsHash) {
+                metadata = await ipfsService.getCertificateMetadata(certificate.ipfsHash);
+            }
         } catch (error) {
-            console.error('Error fetching IPFS metadata:', error);
+            logger.error('Error fetching IPFS metadata', { error: error.message });
         }
 
         res.status(200).json({
             success: true,
-            valid: true,
             data: {
+                valid: true,
+                certificateId: certificateId,
                 ...certificate,
                 metadata: metadata
             }
         });
     } catch (error) {
-        logger.error('Error verifying certificate', { error: error.message, certificateId });
+        logger.error('Error verifying certificate', { error: error.message, certificateId: req.body.certificateId });
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to verify certificate'
@@ -281,6 +294,31 @@ const handleRevokeCertificate = async (req, res) => {
 };
 
 /**
+ * Get blockchain service health status
+ */
+const handleGetHealth = async (req, res) => {
+    try {
+        const isInitialized = blockchainService.isInitialized();
+        
+        res.status(200).json({
+            success: true,
+            data: {
+                initialized: isInitialized,
+                network: process.env.BLOCKCHAIN_NETWORK || 'localhost',
+                contractAddress: isInitialized ? process.env.BLOCKCHAIN_CONTRACT_ADDRESS : null,
+                message: isInitialized ? 'Blockchain service is healthy' : 'Blockchain service not configured'
+            }
+        });
+    } catch (error) {
+        logger.error('Error getting blockchain health', { error: error.message });
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to get blockchain health'
+        });
+    }
+};
+
+/**
  * Get blockchain statistics
  */
 const handleGetStats = async (req, res) => {
@@ -321,5 +359,6 @@ module.exports = {
     handleGetCertificate,
     handleGetStudentCertificates,
     handleRevokeCertificate,
-    handleGetStats
+    handleGetStats,
+    handleGetHealth
 };

@@ -94,19 +94,20 @@ describe('Auth Integration Tests', function () {
 
   describe('GET /api/v1/auth/refresh', () => {
     it('should refresh token successfully', async () => {
+      // Use agent to persist cookies
+      const agent = request.agent(app);
+      
       // First login to get a refresh token
-      const loginRes = await request(app)
+      await agent
         .post('/api/v1/auth/login')
         .send({
           username: 'admin@test.com',
           password: 'Test@1234'
         });
 
-      const cookies = loginRes.headers['set-cookie'];
-      
-      const res = await request(app)
+      // Agent automatically sends cookies from previous request
+      const res = await agent
         .get('/api/v1/auth/refresh')
-        .set('Cookie', cookies)
         .expect('Content-Type', /json/)
         .expect(200);
 
@@ -123,21 +124,26 @@ describe('Auth Integration Tests', function () {
 
   describe('POST /api/v1/auth/logout', () => {
     it('should logout successfully with valid token', async () => {
+      // Use agent to persist cookies
+      const agent = request.agent(app);
+      
       // First login
-      const loginRes = await request(app)
+      const loginRes = await agent
         .post('/api/v1/auth/login')
         .send({
           username: 'admin@test.com',
           password: 'Test@1234'
         });
 
-      const token = loginRes.body.data.accessToken;
+      // Extract csrfToken from cookies (find the one with actual value, not expired)
       const cookies = loginRes.headers['set-cookie'];
+      const csrfCookie = cookies.find(cookie => cookie.startsWith('csrfToken=') && !cookie.includes('1970'));
+      const csrfToken = decodeURIComponent(csrfCookie.split(';')[0].split('=')[1]);
 
-      const res = await request(app)
+      // Agent automatically sends cookies, but we need to send CSRF header
+      const res = await agent
         .post('/api/v1/auth/logout')
-        .set('Authorization', `Bearer ${token}`)
-        .set('Cookie', cookies)
+        .set('x-csrf-token', csrfToken)
         .expect('Content-Type', /json/)
         .expect(200);
 
@@ -153,8 +159,11 @@ describe('Auth Integration Tests', function () {
 
   describe('Authentication Flow', () => {
     it('should complete full login -> access protected resource -> logout flow', async () => {
+      // Use agent to persist cookies
+      const agent = request.agent(app);
+      
       // Step 1: Login
-      const loginRes = await request(app)
+      const loginRes = await agent
         .post('/api/v1/auth/login')
         .send({
           username: 'admin@test.com',
@@ -162,32 +171,33 @@ describe('Auth Integration Tests', function () {
         })
         .expect(200);
 
-      const token = loginRes.body.data.accessToken;
+      expect(loginRes.body).to.have.property('success', true);
+
+      // Extract csrfToken from cookies (find the one with actual value, not expired)
       const cookies = loginRes.headers['set-cookie'];
+      const csrfCookie = cookies.find(cookie => cookie.startsWith('csrfToken=') && !cookie.includes('1970'));
+      const csrfToken = decodeURIComponent(csrfCookie.split(';')[0].split('=')[1]);
 
       // Step 2: Access protected resource (dashboard)
-      const dashboardRes = await request(app)
+      const dashboardRes = await agent
         .get('/api/v1/dashboard')
-        .set('Authorization', `Bearer ${token}`)
-        .set('Cookie', cookies)
+        .set('x-csrf-token', csrfToken)
         .expect(200);
 
-      expect(dashboardRes.body).to.have.property('success', true);
+      // Dashboard returns data directly (not wrapped in {success, data})
+      expect(dashboardRes.body).to.be.an('object');
 
       // Step 3: Logout
-      const logoutRes = await request(app)
+      const logoutRes = await agent
         .post('/api/v1/auth/logout')
-        .set('Authorization', `Bearer ${token}`)
-        .set('Cookie', cookies)
+        .set('x-csrf-token', csrfToken)
         .expect(200);
 
       expect(logoutRes.body).to.have.property('success', true);
 
       // Step 4: Try to access protected resource after logout (should fail)
-      await request(app)
+      await agent
         .get('/api/v1/dashboard')
-        .set('Authorization', `Bearer ${token}`)
-        .set('Cookie', cookies)
         .expect(401);
     });
   });

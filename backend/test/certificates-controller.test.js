@@ -212,31 +212,35 @@ describe('CertificatesController', function () {
 
   describe('handleVerifyCertificate', function () {
     it('should verify certificate successfully', async function () {
-      req.params = { certificateId: '1' };
+      req.body = { certificateId: '1' };
 
       blockchainServiceStub.verifyCertificate.resolves(true);
+      blockchainServiceStub.getCertificate.resolves({ 
+        certificateId: '1',
+        ipfsHash: ''
+      });
 
       await certificatesController.handleVerifyCertificate(req, res);
 
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.firstCall.args[0]).to.deep.include({
-        success: true,
-        valid: true
-      });
+      const response = res.json.firstCall.args[0];
+      expect(response).to.have.property('success', true);
+      expect(response.data).to.have.property('valid', true);
+      expect(response.data).to.have.property('certificateId', '1');
     });
 
     it('should return false for invalid certificate', async function () {
-      req.params = { certificateId: '999' };
+      req.body = { certificateId: '999' };
 
       blockchainServiceStub.verifyCertificate.resolves(false);
 
       await certificatesController.handleVerifyCertificate(req, res);
 
-      expect(res.json.firstCall.args[0]).to.have.property('valid', false);
+      expect(res.json.firstCall.args[0]).to.have.nested.property('data.valid', false);
     });
 
     it('should return 503 when blockchain is not initialized', async function () {
-      req.params = { certificateId: '1' };
+      req.body = { certificateId: '1' };
       blockchainServiceStub.isInitialized.returns(false);
 
       await certificatesController.handleVerifyCertificate(req, res);

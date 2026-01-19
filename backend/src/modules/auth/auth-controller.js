@@ -126,7 +126,9 @@ const handleLogout = asyncHandler(async (req, res) => {
     const message = await logout(refreshToken);
     clearAllCookies(res);
 
-    res.status(204).json(message);
+    res.status(200).json({
+        success: true
+    });
 });
 
 /**
@@ -180,7 +182,12 @@ const handleTokenRefresh = asyncHandler(async (req, res) => {
     setAccessTokenCookie(res, accessToken);
     setCsrfTokenCookie(res, csrfToken);
 
-    res.json(message);
+    res.json({
+        success: true,
+        data: {
+            accessToken
+        }
+    });
 });
 
 const handleAccountEmailVerify = asyncHandler(async (req, res) => {

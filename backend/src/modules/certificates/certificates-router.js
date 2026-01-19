@@ -5,18 +5,20 @@ const {
     handleGetCertificate,
     handleGetStudentCertificates,
     handleRevokeCertificate,
-    handleGetStats
+    handleGetStats,
+    handleGetHealth
 } = require('./certificates-controller');
 const { authenticateToken } = require('../../middlewares');
 
 const router = Router();
 
 // Public routes (no authentication required)
-router.get('/verify/:certificateId', handleVerifyCertificate);
-router.get('/details/:certificateId', handleGetCertificate);
+router.get('/health', handleGetHealth);
+router.post('/verify', handleVerifyCertificate);
+router.get('/:certificateId', handleGetCertificate);
 
 // Protected routes (authentication required)
-router.post('/', authenticateToken, handleIssueCertificate);
+router.post('/issue', authenticateToken, handleIssueCertificate);
 router.get('/student/:studentId', authenticateToken, handleGetStudentCertificates);
 router.post('/:certificateId/revoke', authenticateToken, handleRevokeCertificate);
 router.get('/stats', authenticateToken, handleGetStats);

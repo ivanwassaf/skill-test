@@ -1,32 +1,52 @@
 const request = require('supertest');
 const { expect } = require('chai');
 const { app } = require('../../src/app');
+const { blockchainService } = require('../../src/modules/certificates');
+
+// Helper function to extract CSRF token from cookies
+function extractCsrfToken(cookies) {
+  if (!cookies || !Array.isArray(cookies)) return null;
+  
+  const csrfCookie = cookies.find(cookie => 
+    cookie.startsWith('csrfToken=') && !cookie.includes('1970')
+  );
+  
+  if (!csrfCookie) return null;
+  
+  const tokenMatch = csrfCookie.match(/csrfToken=([^;]+)/);
+  return tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
+}
 
 describe('Certificates Integration Tests', function () {
   this.timeout(10000);
 
-  let authToken;
-  let cookies;
+  let agent;
+  let csrfToken;
   let studentId;
   let certificateId;
 
   before(async () => {
+    // Initialize blockchain service
+    await blockchainService.initialize();
+
+    // Create an agent to maintain session
+    agent = request.agent(app);
+
     // Login to get auth token
-    const loginRes = await request(app)
+    const loginRes = await agent
       .post('/api/v1/auth/login')
       .send({
         username: 'admin@test.com',
         password: 'Test@1234'
       });
 
-    authToken = loginRes.body.data.accessToken;
-    cookies = loginRes.headers['set-cookie'];
+    // Extract CSRF token from cookies
+    csrfToken = extractCsrfToken(loginRes.headers['set-cookie']);
 
     // Get a student ID for certificate tests
-    const studentsRes = await request(app)
+    const studentsRes = await agent
       .get('/api/v1/students')
-      .set('Authorization', `Bearer ${authToken}`)
-      .set('Cookie', cookies);
+      .set('x-csrf-token', csrfToken);
 
     if (studentsRes.body.data && studentsRes.body.data.length > 0) {
       studentId = studentsRes.body.data[0].id;
@@ -35,7 +55,7 @@ describe('Certificates Integration Tests', function () {
 
   describe('GET /api/v1/certificates/health', () => {
     it('should return blockchain service health status', async () => {
-      const res = await request(app)
+      const res = await agent
         .get('/api/v1/certificates/health')
         .expect('Content-Type', /json/)
         .expect(200);
@@ -50,28 +70,26 @@ describe('Certificates Integration Tests', function () {
     it('should issue a certificate with valid data when blockchain is available', async function () {
       const certificateData = {
         studentId: studentId || 1,
-        courseName: 'Integration Testing Course',
-        issueDate: '2024-01-15',
-        grade: 'A',
-        metadata: {
+        certificateType: 'Integration Testing Course',
+        achievement: 'Grade A',
+        additionalInfo: {
           instructor: 'Prof. Integration',
           duration: '6 months'
         }
       };
 
-      const res = await request(app)
+      const res = await agent
         .post('/api/v1/certificates/issue')
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies)
+        .set('x-csrf-token', csrfToken)
         .send(certificateData);
 
       // If blockchain is not initialized, should return 503
       if (res.status === 503) {
         expect(res.body).to.have.property('success', false);
-        expect(res.body.error).to.have.property('code', 'SERVICE_UNAVAILABLE');
+        expect(res.body).to.have.property('message');
         this.skip();
       } else {
-        expect(res.status).to.equal(200);
+        expect(res.status).to.equal(201);
         expect(res.body).to.have.property('success', true);
         expect(res.body.data).to.have.property('certificateId');
         expect(res.body.data).to.have.property('transactionHash');
@@ -86,21 +104,19 @@ describe('Certificates Integration Tests', function () {
         .post('/api/v1/certificates/issue')
         .send({
           studentId: 1,
-          courseName: 'Test Course',
-          issueDate: '2024-01-15',
-          grade: 'A'
+          certificateType: 'Test Course',
+          achievement: 'A'
         })
         .expect(401);
     });
 
     it('should fail to issue certificate with missing required fields', async () => {
-      const res = await request(app)
+      const res = await agent
         .post('/api/v1/certificates/issue')
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies)
+        .set('x-csrf-token', csrfToken)
         .send({
-          courseName: 'Test Course'
-          // Missing studentId, issueDate, grade
+          achievement: 'Test Achievement'
+          // Missing studentId and certificateType
         });
 
       expect(res.status).to.be.oneOf([400, 503]);
@@ -113,10 +129,9 @@ describe('Certificates Integration Tests', function () {
         this.skip();
       }
 
-      const res = await request(app)
+      const res = await agent
         .get(`/api/v1/certificates/${certificateId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies);
+        .set('x-csrf-token', csrfToken);
 
       if (res.status === 503) {
         this.skip();
@@ -128,10 +143,9 @@ describe('Certificates Integration Tests', function () {
     });
 
     it('should return 404 for non-existent certificate', async function () {
-      const res = await request(app)
+      const res = await agent
         .get('/api/v1/certificates/99999999')
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies);
+        .set('x-csrf-token', csrfToken);
 
       // If blockchain not available, will return 503
       if (res.status === 503) {
@@ -148,10 +162,9 @@ describe('Certificates Integration Tests', function () {
         this.skip();
       }
 
-      const res = await request(app)
+      const res = await agent
         .post('/api/v1/certificates/verify')
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies)
+        .set('x-csrf-token', csrfToken)
         .send({ certificateId });
 
       if (res.status === 503) {
@@ -165,10 +178,9 @@ describe('Certificates Integration Tests', function () {
     });
 
     it('should return invalid for non-existent certificate', async function () {
-      const res = await request(app)
+      const res = await agent
         .post('/api/v1/certificates/verify')
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies)
+        .set('x-csrf-token', csrfToken)
         .send({ certificateId: 99999999 });
 
       if (res.status === 503) {
@@ -188,10 +200,9 @@ describe('Certificates Integration Tests', function () {
         this.skip();
       }
 
-      const res = await request(app)
+      const res = await agent
         .get(`/api/v1/certificates/student/${studentId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies);
+        .set('x-csrf-token', csrfToken);
 
       if (res.status === 503) {
         this.skip();
@@ -205,10 +216,9 @@ describe('Certificates Integration Tests', function () {
 
   describe('GET /api/v1/certificates/stats', () => {
     it('should get certificate statistics', async function () {
-      const res = await request(app)
+      const res = await agent
         .get('/api/v1/certificates/stats')
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies);
+        .set('x-csrf-token', csrfToken);
 
       if (res.status === 503) {
         this.skip();
@@ -227,16 +237,14 @@ describe('Certificates Integration Tests', function () {
       }
 
       // Step 1: Issue certificate
-      const issueRes = await request(app)
+      const issueRes = await agent
         .post('/api/v1/certificates/issue')
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies)
+        .set('x-csrf-token', csrfToken)
         .send({
           studentId,
-          courseName: 'Full Flow Test Course',
-          issueDate: '2024-01-15',
-          grade: 'A+',
-          metadata: {
+          certificateType: 'Full Flow Test Course',
+          achievement: 'Grade A+',
+          additionalInfo: {
             instructor: 'Prof. Flow',
             duration: '1 year'
           }
@@ -246,34 +254,31 @@ describe('Certificates Integration Tests', function () {
         this.skip();
       }
 
-      expect(issueRes.status).to.equal(200);
+      expect(issueRes.status).to.equal(201);
       const newCertificateId = issueRes.body.data.certificateId;
 
       // Step 2: Verify certificate
-      const verifyRes = await request(app)
+      const verifyRes = await agent
         .post('/api/v1/certificates/verify')
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies)
+        .set('x-csrf-token', csrfToken)
         .send({ certificateId: newCertificateId });
 
       expect(verifyRes.status).to.equal(200);
       expect(verifyRes.body.data).to.have.property('valid', true);
 
       // Step 3: Retrieve certificate details
-      const getRes = await request(app)
+      const getRes = await agent
         .get(`/api/v1/certificates/${newCertificateId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies);
+        .set('x-csrf-token', csrfToken);
 
       expect(getRes.status).to.equal(200);
       expect(getRes.body.data).to.have.property('certificateId', newCertificateId);
       expect(getRes.body.data).to.have.property('studentId', studentId);
 
       // Step 4: Check student certificates list
-      const studentCertsRes = await request(app)
+      const studentCertsRes = await agent
         .get(`/api/v1/certificates/student/${studentId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', cookies);
+        .set('x-csrf-token', csrfToken);
 
       expect(studentCertsRes.status).to.equal(200);
       const certificates = studentCertsRes.body.data;

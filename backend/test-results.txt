@@ -1,0 +1,524 @@
+﻿
+> school-mgmt-backend@1.0.0 test
+> mocha "test/**/*.test.js" --timeout 10000 --exit
+
+x-secret-header secret
+node.exe : (node:2584) Warning: Accessing non-existent property 
+'logger' of module exports inside circular dependency
+At line:1 char:1
++ & "C:\nvm4w\nodejs/node.exe" 
+"C:\nvm4w\nodejs/node_modules/npm/bin/np ...
++ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:2584) War...ular d 
+   ependency:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was 
+created)
+
+
+  BlockchainService
+    Module Export
+      Ô£ö should export blockchain service singleton
+    isInitialized
+      Ô£ö should return false when not initialized
+    getRpcUrl
+      Ô£ö should return localhost URL for localhost network
+      Ô£ö should return sepolia URL for sepolia network when configured
+      Ô£ö should return default localhost URL for unknown network
+    Service Methods
+      Ô£ö should have issueCertificate method
+      Ô£ö should have verifyCertificate method
+      Ô£ö should have getCertificate method
+      Ô£ö should have getStudentCertificates method
+      Ô£ö should have revokeCertificate method
+      Ô£ö should have getTotalCertificates method
+      Ô£ö should have addIssuer method
+      Ô£ö should have removeIssuer method
+    Error Handling
+ÔÜá´©Å  Blockchain not configured. Set BLOCKCHAIN_PRIVATE_KEY and 
+BLOCKCHAIN_CONTRACT_ADDRESS
+      Ô£ö should handle missing configuration gracefully
+ÔÜá´©Å  Blockchain not configured. Set BLOCKCHAIN_PRIVATE_KEY and 
+BLOCKCHAIN_CONTRACT_ADDRESS
+      Ô£ö should handle missing contract address gracefully
+      Ô£ö should throw error when calling methods before initialization
+
+  CertificatesController
+    handleIssueCertificate
+      Ô£ö should issue certificate successfully without IPFS
+      Ô£ö should return 400 when studentId is missing
+      Ô£ö should return 400 when certificateType is missing
+      Ô£ö should return 503 when blockchain is not initialized
+      Ô£ö should return 404 when student is not found
+2026-01-18 23:05:59:559 [31merror[39m: [31mError issuing certificate[39m
+      Ô£ö should handle blockchain errors gracefully
+      Ô£ö should generate deterministic address for student without wallet
+    handleVerifyCertificate
+Error fetching IPFS metadata: TypeError: Cannot read properties of 
+undefined (reading 'ipfsHash')
+    at Object.handleVerifyCertificate (C:\Users\iwassaf\OneDrive - 
+PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\bac
+kend\src\modules\certificates\certificates-controller.js:135:77)
+    at async Context.<anonymous> (C:\Users\iwassaf\OneDrive - 
+PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\bac
+kend\test\certificates-controller.test.js:219:7)
+      Ô£ö should verify certificate successfully
+      Ô£ö should return false for invalid certificate
+      Ô£ö should return 503 when blockchain is not initialized
+    handleGetCertificate
+      Ô£ö should get certificate details successfully
+2026-01-18 23:05:59:559 [31merror[39m: [31mError getting certificate[39m
+      Ô£ö should handle errors when getting certificate
+    handleRevokeCertificate
+      Ô£ö should revoke certificate successfully
+      Ô£ö should return 503 when blockchain is not initialized
+    handleGetStudentCertificates
+      Ô£ö should get all student certificates
+      Ô£ö should return 404 when student not found
+    handleGetStats
+      Ô£ö should return certificate statistics
+      Ô£ö should return stats when blockchain is not initialized
+
+  Auth Integration Tests
+    POST /api/v1/auth/login
+2026-01-18 23:05:59:559 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:05:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 200 19296 "-" "-"[39m
+      Ô£ö should login successfully with valid credentials (152ms)
+2026-01-18 23:05:59:559 [31merror[39m: [31mError: Invalid credential[39m
+2026-01-18 23:05:59:559 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:05:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 401 58 "-" "-"[39m
+      Ô£ö should fail login with invalid email
+2026-01-18 23:05:59:559 [31merror[39m: [31mError: Invalid credential[39m
+2026-01-18 23:05:59:559 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:05:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 401 58 "-" "-"[39m
+      Ô£ö should fail login with invalid password (59ms)
+2026-01-18 23:05:59:559 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:05:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 400 101 "-" "-"[39m
+      Ô£ö should fail login with missing email
+2026-01-18 23:05:59:559 [31merror[39m: [31mError: Invalid credential[39m
+2026-01-18 23:05:59:559 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:05:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 401 58 "-" "-"[39m
+      Ô£ö should fail login with invalid email format
+    GET /api/v1/auth/refresh
+2026-01-18 23:05:59:559 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:05:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 200 19296 "-" "-"[39m
+2026-01-18 23:05:59:559 [31merror[39m: [31mError: Invalid refresh token[39m
+2026-01-18 23:05:59:559 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:05:59 +0000] "GET /api/v1/auth/refresh HTTP/1.1" 401 61 "-" "-"[39m
+      1) should refresh token successfully
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Invalid refresh token[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/auth/refresh HTTP/1.1" 401 61 "-" "-"[39m
+      Ô£ö should fail refresh without refresh token cookie
+    POST /api/v1/auth/logout
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/auth/login HTTP/1.1" 200 19296 "-" "-"[39m
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/auth/logout HTTP/1.1" 401 82 "-" "-"[39m
+      2) should logout successfully with valid token
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/auth/logout HTTP/1.1" 401 82 "-" "-"[39m
+      Ô£ö should fail logout without authentication
+    Authentication Flow
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/auth/login HTTP/1.1" 200 19296 "-" "-"[39m
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/dashboard HTTP/1.1" 401 82 "-" "-"[39m
+      3) should complete full login -> access protected resource -> logout flow
+
+  Certificates Integration Tests
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/auth/login HTTP/1.1" 200 19296 "-" "-"[39m
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/students HTTP/1.1" 401 82 "-" "-"[39m
+    GET /api/v1/certificates/health
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/certificates/health HTTP/1.1" 404 30 "-" "-"[39m
+      4) should return blockchain service health status
+    POST /api/v1/certificates/issue
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/certificates/issue HTTP/1.1" 404 30 "-" "-"[39m
+      5) should issue a certificate with valid data when blockchain is available
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/certificates/issue HTTP/1.1" 404 30 "-" "-"[39m
+      6) should fail to issue certificate without authentication
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/certificates/issue HTTP/1.1" 404 30 "-" "-"[39m
+      7) should fail to issue certificate with missing required fields
+    GET /api/v1/certificates/:id
+      - should get certificate by ID when blockchain is available
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/certificates/99999999 HTTP/1.1" 404 30 "-" "-"[39m
+      Ô£ö should return 404 for non-existent certificate
+    POST /api/v1/certificates/verify
+      - should verify a valid certificate when blockchain is available
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/certificates/verify HTTP/1.1" 404 30 "-" "-"[39m
+      Ô£ö should return invalid for non-existent certificate
+    GET /api/v1/certificates/student/:studentId
+      - should get all certificates for a student
+    GET /api/v1/certificates/stats
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/certificates/stats HTTP/1.1" 401 82 "-" "-"[39m
+      8) should get certificate statistics
+    Certificate Issuance Flow
+      - should complete full issue -> verify -> retrieve flow
+
+  Database Optimization Tests
+    Database Connection
+Ô£ô Database connection successful
+      Ô£ö should connect to database successfully
+    Pagination Utilities
+      Ô£ö should parse pagination parameters with defaults
+      Ô£ö should parse custom pagination parameters
+      Ô£ö should enforce max limit
+      Ô£ö should build paginated response with metadata
+    Optimized Student Queries
+Ô£ô Found 3 students on page 1
+      Ô£ö should query students with pagination
+Ô£ô Total students: 3
+      Ô£ö should count total students
+Ô£ô Parallel queries completed in 50ms
+      Ô£ö should execute parallel queries (51ms)
+    Performance Benchmarks
+
+Ô£ô Average query time: 0.40ms (5 iterations)
+      Ô£ö should benchmark query performance
+
+  Students Integration Tests
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/auth/login HTTP/1.1" 200 19296 "-" "-"[39m
+    GET /api/v1/students
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/students HTTP/1.1" 401 82 "-" "-"[39m
+      9) should get all students with authentication
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/students HTTP/1.1" 401 82 "-" "-"[39m
+      Ô£ö should fail to get students without authentication
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/students HTTP/1.1" 401 82 "-" "-"[39m
+      Ô£ö should fail to get students with invalid token
+    GET /api/v1/students/:id
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/students HTTP/1.1" 401 82 "-" "-"[39m
+      Ô£ö should get a specific student by ID
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "GET /api/v1/students/99999 HTTP/1.1" 401 82 "-" "-"[39m
+      10) should return 404 for non-existent student
+    POST /api/v1/students
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/students HTTP/1.1" 401 82 "-" "-"[39m
+      11) should create a new student with valid data
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/students HTTP/1.1" 401 82 "-" "-"[39m
+      12) should fail to create student with duplicate email
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/students HTTP/1.1" 401 82 "-" "-"[39m
+      13) should fail to create student with missing required fields
+    PUT /api/v1/students/:id
+      14) should update an existing student
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "PUT /api/v1/students/99999 HTTP/1.1" 401 82 "-" "-"[39m
+      15) should fail to update non-existent student
+    DELETE /api/v1/students/:id
+      16) should delete an existing student
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "DELETE /api/v1/students/99999 HTTP/1.1" 401 82 "-" "-"[39m
+      17) should fail to delete non-existent student
+    Student CRUD Flow
+2026-01-18 23:06:00:60 [31merror[39m: [31mError: Unauthorized. Please provide valid tokens.[39m
+2026-01-18 23:06:00:60 [35mhttp[39m: [35m::ffff:127.0.0.1 - - [19/Jan/2026:02:06:00 +0000] "POST /api/v1/students HTTP/1.1" 401 82 "-" "-"[39m
+      18) should complete full create -> read -> update -> delete flow
+
+  IPFSService
+    isConfigured
+      Ô£ö should return false when API key is missing
+      Ô£ö should return false when secret key is missing
+      Ô£ö should return true when both keys are configured
+    uploadCertificateMetadata
+      Ô£ö should upload metadata successfully
+2026-01-18 23:06:00:60 [31merror[39m: [31mError uploading to IPFS[39m
+      Ô£ö should throw error when upload fails
+      Ô£ö should throw error when not configured
+    getCertificateMetadata
+      Ô£ö should retrieve metadata successfully
+2026-01-18 23:06:00:60 [31merror[39m: [31mError fetching from IPFS[39m
+      Ô£ö should handle retrieval errors
+2026-01-18 23:06:00:60 [31merror[39m: [31mError fetching from IPFS[39m
+      Ô£ö should handle empty IPFS hash
+    pinByHash
+      Ô£ö should pin hash successfully
+      Ô£ö should throw error when not configured
+
+
+  66 passing (928ms)
+  4 pending
+  18 failing
+
+  1) Auth Integration Tests
+       GET /api/v1/auth/refresh
+         should refresh token successfully:
+     Error: expected 200 "OK", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\auth.integration.test.js:111:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  2) Auth Integration Tests
+       POST /api/v1/auth/logout
+         should logout successfully with valid token:
+     Error: expected 200 "OK", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\auth.integration.test.js:142:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  3) Auth Integration Tests
+       Authentication Flow
+         should complete full login -> access protected resource -> logout flow:
+     Error: expected 200 "OK", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\auth.integration.test.js:173:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  4) Certificates Integration Tests
+       GET /api/v1/certificates/health
+         should return blockchain service health status:
+     Error: expected 200 "OK", got 404 "Not Found"
+      at Context.<anonymous> (test\integration\certificates.integration.test.js:41:10)
+      at process.processImmediate (node:internal/timers:485:21)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  5) Certificates Integration Tests
+       POST /api/v1/certificates/issue
+         should issue a certificate with valid data when blockchain is available:
+
+      AssertionError: expected 404 to equal 200
+      + expected - actual
+
+      -404
+      +200
+      
+      at Context.<anonymous> (test\integration\certificates.integration.test.js:74:31)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+  6) Certificates Integration Tests
+       POST /api/v1/certificates/issue
+         should fail to issue certificate without authentication:
+     Error: expected 401 "Unauthorized", got 404 "Not Found"
+      at Context.<anonymous> (test\integration\certificates.integration.test.js:93:10)
+      at process.processImmediate (node:internal/timers:485:21)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  7) Certificates Integration Tests
+       POST /api/v1/certificates/issue
+         should fail to issue certificate with missing required fields:
+     AssertionError: expected 404 to be one of [ 400, 503 ]
+      at Context.<anonymous> (test\integration\certificates.integration.test.js:106:32)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+  8) Certificates Integration Tests
+       GET /api/v1/certificates/stats
+         should get certificate statistics:
+
+      AssertionError: expected 401 to equal 200
+      + expected - actual
+
+      -401
+      +200
+      
+      at Context.<anonymous> (test\integration\certificates.integration.test.js:217:29)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+  9) Students Integration Tests
+       GET /api/v1/students
+         should get all students with authentication:
+     Error: expected 200 "OK", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\students.integration.test.js:32:10)
+      at process.processImmediate (node:internal/timers:485:21)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  10) Students Integration Tests
+       GET /api/v1/students/:id
+         should return 404 for non-existent student:
+     Error: expected 404 "Not Found", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\students.integration.test.js:81:10)
+      at process.processImmediate (node:internal/timers:485:21)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  11) Students Integration Tests
+       POST /api/v1/students
+         should create a new student with valid data:
+     Error: expected 201 "Created", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\students.integration.test.js:105:10)
+      at process.processImmediate (node:internal/timers:485:21)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  12) Students Integration Tests
+       POST /api/v1/students
+         should fail to create student with duplicate email:
+     Error: expected 409 "Conflict", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\students.integration.test.js:129:10)
+      at process.processImmediate (node:internal/timers:485:21)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  13) Students Integration Tests
+       POST /api/v1/students
+         should fail to create student with missing required fields:
+     Error: expected 400 "Bad Request", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\students.integration.test.js:143:10)
+      at process.processImmediate (node:internal/timers:485:21)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  14) Students Integration Tests
+       PUT /api/v1/students/:id
+         should update an existing student:
+     TypeError: this.skip is not a function
+      at Context.<anonymous> (test\integration\students.integration.test.js:150:14)
+      at process.processImmediate (node:internal/timers:485:21)
+
+  15) Students Integration Tests
+       PUT /api/v1/students/:id
+         should fail to update non-existent student:
+     Error: expected 404 "Not Found", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\students.integration.test.js:178:10)
+      at process.processImmediate (node:internal/timers:485:21)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  16) Students Integration Tests
+       DELETE /api/v1/students/:id
+         should delete an existing student:
+     TypeError: this.skip is not a function
+      at Context.<anonymous> (test\integration\students.integration.test.js:185:14)
+      at process.processImmediate (node:internal/timers:485:21)
+
+  17) Students Integration Tests
+       DELETE /api/v1/students/:id
+         should fail to delete non-existent student:
+     Error: expected 404 "Not Found", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\students.integration.test.js:210:10)
+      at process.processImmediate (node:internal/timers:485:21)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+  18) Students Integration Tests
+       Student CRUD Flow
+         should complete full create -> read -> update -> delete flow:
+     Error: expected 201 "Created", got 401 "Unauthorized"
+      at Context.<anonymous> (test\integration\students.integration.test.js:234:10)
+      at process.processImmediate (node:internal/timers:485:21)
+  ----
+      at Test._assertStatus (node_modules\supertest\lib\test.js:309:14)
+      at C:\Users\iwassaf\OneDrive - PLANEXWARE SA\Documents\Ivan\Skill-Test\skill-test-main\skill-test\backend\node_modules\supertest\lib\test.js:365:13
+      at Test._assertFunction (node_modules\supertest\lib\test.js:342:13)
+      at Test.assert (node_modules\supertest\lib\test.js:195:23)
+      at localAssert (node_modules\supertest\lib\test.js:138:14)
+      at Server.<anonymous> (node_modules\supertest\lib\test.js:152:11)
+      at Object.onceWrapper (node:events:633:28)
+      at Server.emit (node:events:519:28)
+      at emitCloseNT (node:net:2419:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+
+
