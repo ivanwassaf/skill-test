@@ -21,6 +21,24 @@ services:
     networks:
       - school_network
 
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: school_mgmt_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - school_network
+    restart: unless-stopped
+
   # Backend API
   backend:
     build:
@@ -30,6 +48,8 @@ services:
     environment:
       PORT: 5007
       DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/school_mgmt
+      REDIS_ENABLED: true
+      REDIS_URL: redis://redis:6379
       JWT_ACCESS_TOKEN_SECRET: your_super_secret_access_token_key_here_at_least_32_chars
       JWT_REFRESH_TOKEN_SECRET: your_super_secret_refresh_token_key_here_at_least_32_chars
       JWT_ACCESS_TOKEN_TIME_IN_MS: 900000
@@ -54,6 +74,8 @@ services:
       - "5007:5007"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       blockchain:
         condition: service_healthy
@@ -114,6 +136,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   school_network:

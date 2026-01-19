@@ -17,6 +17,7 @@ const { departmentRoutes } = require("../modules/departments/department-router.j
 const { handleGetDashboardData } = require("../modules/dashboard/dashboard-controller.js");
 const { accessControlRoutes } = require("../modules/access-control/access-control-router.js");
 const { certificatesRouter } = require("../modules/certificates");
+const redisStatsRouter = require("./redis-stats");
 
 router.get("/teachers", authenticateToken, csrfProtection, checkApiAccess, handleGetAllTeachers);
 router.get("/dashboard", authenticateToken, csrfProtection, checkApiAccess, handleGetDashboardData);
@@ -33,6 +34,7 @@ router.use("/staffs", authenticateToken, csrfProtection, staffsRoutes);
 router.use("/departments", authenticateToken, csrfProtection, departmentRoutes);
 router.use("/roles", authenticateToken, csrfProtection, rpRoutes);
 router.use("/certificates", certificatesRouter);
+router.use("/redis", redisStatsRouter);
 router.use(handle404Error);
 
 module.exports = { v1Routes: router };
