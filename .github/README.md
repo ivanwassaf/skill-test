@@ -383,13 +383,76 @@ npx hardhat run scripts/deploy.js --network localhost
 ```
 
 ### Access the Application
-- **Frontend**: http://localhost:5173
+- **Frontend**: http://localhost (puerto 80 via nginx)
 - **Backend API**: http://localhost:5007
 - **API Docs** ⭐ NEW: http://localhost:5007/api-docs
 - **Health Check** ⭐ NEW: http://localhost:5007/health
-- **Demo Credentials**: 
+- **Demo Credentials** (IMPORTANTE - NO CAMBIAR):
   - Email: `admin@school-admin.com`
   - Password: `3OU4zn3q6Zh9`
+  - Hash: `$argon2id$v=19$m=65536,t=3,p=4$21a+bDbESEI60WO1wRKnvQ$i6OrxqNiHvwtf1Xg3bfU5+AXZG14fegW3p+RSMvq1oU`
+
+## ⚠️ ARQUITECTURA IMPORTANTE - LEER ANTES DE TRABAJAR
+
+### 🔐 Autenticación y Credenciales
+**NUNCA cambiar las credenciales de producción:**
+- Email: `admin@school-admin.com`
+- Password: `3OU4zn3q6Zh9` (NO Admin@1234)
+- El hash argon2 ya está en la base de datos
+
+### 👥 Estructura de Estudiantes (CRÍTICO)
+**NO existe tabla `students`** - Los estudiantes están en la tabla `users`:
+- Estudiantes = `users` donde `role_id = 3` (role "Student")
+- Datos adicionales en `user_profiles` (class_name, section_name, roll, etc.)
+- Query ejemplo:
+  ```sql
+  SELECT u.id, u.name, u.email, p.class_name, p.section_name, p.roll
+  FROM users u
+  INNER JOIN user_profiles p ON u.id = p.user_id
+  WHERE u.role_id = 3;
+  ```
+- Estudiantes actuales: Ben, Raul, Test Student
+
+### 🖼️ CORS y Archivos Estáticos (RESUELTO)
+**Configuración crítica para SVG/imágenes:**
+- Frontend: `http://localhost` (puerto 80, nginx)
+- Backend: `http://localhost:5007`
+- **CORS configurado en**: `backend/src/config/cors.js`
+- **Helmet con CORP manual**: `backend/src/app.js` usa middlewares individuales
+- **Header crítico**: `Cross-Origin-Resource-Policy: cross-origin`
+- **NO modificar** la configuración de Helmet sin revisar CORP
+
+### 📋 Tipos de Destinatarios de Noticias
+**Tabla `notice_recipient_types` debe tener datos:**
+```sql
+-- Admin (sin dependencias)
+INSERT INTO notice_recipient_types (role_id, primary_dependent_name, primary_dependent_select)
+VALUES (1, NULL, NULL);
+
+-- Teacher (por departamento)
+INSERT INTO notice_recipient_types (role_id, primary_dependent_name, primary_dependent_select)
+VALUES (2, 'department', 'SELECT id, name FROM departments ORDER BY name');
+
+-- Student (por clase)
+INSERT INTO notice_recipient_types (role_id, primary_dependent_name, primary_dependent_select)
+VALUES (3, 'class', 'SELECT id, name FROM classes ORDER BY name');
+```
+- Ya incluido en `seed_db/seed-db.sql`
+
+### 🔄 API Response Structure
+**Endpoint de estudiantes devuelve**:
+```json
+{
+  "students": [...],  // NO "data"
+  "pagination": {
+    "currentPage": 1,
+    "totalItems": 3,
+    ...
+  }
+}
+```
+- Frontend espera clave `students`, no `data`
+- Modificado en `backend/src/modules/students/students-service.js`
 
 ## 🎯 Skill Test Problems
 

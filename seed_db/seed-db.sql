@@ -159,6 +159,14 @@ VALUES ('Draft', 'Draft'),
 ('Approve', 'Approved'),
 ('Delete', 'Deleted');
 
+-- Notice recipient types (for notice distribution configuration)
+ALTER SEQUENCE notice_recipient_types_id_seq RESTART WITH 1;
+INSERT INTO notice_recipient_types (role_id, primary_dependent_name, primary_dependent_select)
+VALUES 
+(1, NULL, NULL),  -- Admin (no dependencies)
+(2, 'department', 'SELECT id, name FROM departments ORDER BY name'),  -- Teacher by department
+(3, 'class', 'SELECT id, name FROM classes ORDER BY name');  -- Student by class
+
 INSERT INTO users(name,email,role_id,created_dt,password, is_active, is_email_verified)
 VALUES('John Doe','admin@school-admin.com',1, now(),'$argon2id$v=19$m=65536,t=3,p=4$21a+bDbESEI60WO1wRKnvQ$i6OrxqNiHvwtf1Xg3bfU5+AXZG14fegW3p+RSMvq1oU', true, true)
 RETURNING id;

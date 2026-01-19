@@ -20,7 +20,13 @@ const getAllStudents = async (payload) => {
     ]);
     
     // Return paginated response with metadata
-    return buildPaginatedResponse(students, page, limit, total);
+    const paginatedResponse = buildPaginatedResponse(students, page, limit, total);
+    
+    // Frontend expects 'students' key, not 'data'
+    return {
+        students: paginatedResponse.data,
+        pagination: paginatedResponse.pagination
+    };
 }
 
 const getStudentDetail = async (id) => {
