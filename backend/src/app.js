@@ -5,8 +5,10 @@ const morgan = require("morgan");
 const swaggerUi = require("swagger-ui-express");
 const dotenv = require("dotenv");
 
-// Load environment variables
-dotenv.config();
+// Load environment-specific .env file
+const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+dotenv.config({ path: envFile });
+console.log(`📝 Loaded environment from: ${envFile}`);
 
 
 const { handle404Error, handleGlobalError } = require("./middlewares");
