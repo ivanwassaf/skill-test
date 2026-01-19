@@ -9,7 +9,7 @@ const generateHashedPassword = async (password) => {
 const verifyPassword = async (passwordFromDb, passwordFromUser) => {
     const isPasswordValid = await argon2.verify(passwordFromDb, passwordFromUser);
     if (!isPasswordValid) {
-        throw new ApiError(400, "Invalid credential");
+        throw new ApiError(401, "Invalid credential");
     }
 }
 

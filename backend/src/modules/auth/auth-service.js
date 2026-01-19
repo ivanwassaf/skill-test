@@ -40,7 +40,7 @@ const login = async (username, passwordFromUser) => {
 
     const user = await findUserByUsername(username, client);
     if (!user) {
-      throw new ApiError(400, "Invalid credential");
+      throw new ApiError(401, "Invalid credential");
     }
 
     const {

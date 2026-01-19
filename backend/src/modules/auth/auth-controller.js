@@ -93,7 +93,13 @@ const handleLogin = asyncHandler(async (req, res) => {
     clearAllCookies(res);
     setAllCookies(res, accessToken, refreshToken, csrfToken);
 
-    res.json(accountBasic);
+    res.json({
+        success: true,
+        data: {
+            accessToken,
+            user: accountBasic
+        }
+    });
 });
 
 /**
