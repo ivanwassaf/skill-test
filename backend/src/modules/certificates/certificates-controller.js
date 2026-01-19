@@ -95,7 +95,7 @@ const handleIssueCertificate = async (req, res) => {
             }
         });
     } catch (error) {
-        logger.error('Error issuing certificate', { error: error.message, studentId });
+        logger.error('Error issuing certificate', { error: error.message, studentId: req.body.studentId });
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to issue certificate'
@@ -187,7 +187,7 @@ const handleGetCertificate = async (req, res) => {
             }
         });
     } catch (error) {
-        logger.error('Error getting certificate', { error: error.message, certificateId });
+        logger.error('Error getting certificate', { error: error.message, certificateId: req.params.certificateId });
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to get certificate'
