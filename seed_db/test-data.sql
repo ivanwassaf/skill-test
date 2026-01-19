@@ -56,3 +56,12 @@ SELECT
 FROM users 
 WHERE email IN ('student1@test.com', 'student2@test.com', 'student3@test.com')
 ON CONFLICT (user_id) DO NOTHING;
+
+-- Insert notice recipient types (required for notices module)
+ALTER SEQUENCE notice_recipient_types_id_seq RESTART WITH 1;
+INSERT INTO notice_recipient_types (role_id, primary_dependent_name, primary_dependent_select)
+VALUES 
+(1, NULL, NULL),  -- Admin
+(2, 'department', 'SELECT id, name FROM departments ORDER BY name'),  -- Teacher by department
+(3, 'class', 'SELECT id, name FROM classes ORDER BY name')  -- Student by class
+ON CONFLICT DO NOTHING;

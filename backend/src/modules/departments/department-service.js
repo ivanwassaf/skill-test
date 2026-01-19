@@ -6,7 +6,6 @@ const {
   updateDepartmentById,
   deleteDepartmentById,
 } = require("./department-repository");
-const { departmentModuleHandler } = require("./department-module");
 
 const processGetAllDepartments = async () => {
   const departments = await getAllDepartments();
@@ -49,12 +48,11 @@ const processDeleteDepartmentById = async (id) => {
   return { message: "Department deleted successfully" };
 };
 
-module.exports = departmentModuleHandler(async () => {
-  return {
-    processGetAllDepartments,
-    processGetDepartmentById,
-    processUpdateDepartmentById,
-    processDeleteDepartmentById,
-    processAddNewDepartment,
-  };
-});
+// Export directly without async wrapper to avoid initialization issues
+module.exports = {
+  processGetAllDepartments,
+  processGetDepartmentById,
+  processUpdateDepartmentById,
+  processDeleteDepartmentById,
+  processAddNewDepartment,
+};
