@@ -1,0 +1,14 @@
+# Automated Database Backup Cron Jobs
+# Add to crontab with: crontab -e
+
+# Daily backup at 2:00 AM
+0 2 * * * cd /path/to/project && ./scripts/backup-database.sh >> /var/log/school-mgmt-backup.log 2>&1
+
+# Weekly backup on Sunday at 3:00 AM (kept for 90 days)
+0 3 * * 0 cd /path/to/project && BACKUP_RETENTION_DAYS=90 ./scripts/backup-database.sh >> /var/log/school-mgmt-backup-weekly.log 2>&1
+
+# Monthly backup on first day of month at 4:00 AM (kept for 365 days)
+0 4 1 * * cd /path/to/project && BACKUP_RETENTION_DAYS=365 ./scripts/backup-database.sh >> /var/log/school-mgmt-backup-monthly.log 2>&1
+
+# Cleanup old logs every week
+0 5 * * 0 find /var/log -name "school-mgmt-backup*.log" -mtime +30 -delete

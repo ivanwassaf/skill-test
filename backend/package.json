@@ -5,11 +5,15 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./src/server.js",
-    "test": "mocha \"test/**/*.test.js\" --timeout 10000 --exit",
+    "test": "mocha \"test/**/*.test.js\" --exclude \"test/e2e/**\" --timeout 10000 --exit",
     "test:unit": "mocha \"test/*.test.js\" --timeout 10000 --exit",
     "test:integration": "mocha \"test/integration/**/*.test.js\" --timeout 15000 --exit",
-    "test:coverage": "nyc --reporter=html --reporter=text mocha \"test/**/*.test.js\" --timeout 10000 --exit",
-    "test:all": "npm run test:unit && npm run test:integration"
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:coverage": "nyc --reporter=html --reporter=text mocha \"test/**/*.test.js\" --exclude \"test/e2e/**\" --timeout 10000 --exit",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e"
   },
   "author": "",
   "license": "ISC",
@@ -41,9 +45,11 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "chai": "^6.2.2",
     "mocha": "^11.7.5",
     "nyc": "^17.1.0",
+    "playwright": "^1.57.0",
     "sinon": "^21.0.1",
     "supertest": "^7.2.2"
   }

@@ -1,13 +1,13 @@
 const express = require("express");
 const cookieParser = require("cookie-parser"); 
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 const swaggerUi = require("swagger-ui-express");
 const dotenv = require("dotenv");
 dotenv.config();
 
 const { handle404Error, handleGlobalError } = require("./middlewares");
+const { createUserRateLimiter, strictRateLimiter, getRateLimitStatus } = require("./middlewares/user-rate-limiter");
 const { v1Routes } = require("./routes/v1");
 const { cors, logger } = require("./config");
 const swaggerSpecs = require("./config/swagger");
@@ -28,27 +28,6 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-  message: {
-    success: false,
-    error: {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many requests, please try again later.',
-    },
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => {
-    // Skip rate limiting for health checks
-    return req.path === '/health' || req.path === '/api/v1/health';
-  },
-});
-
-app.use('/api/', limiter);
-
 // HTTP request logging
 app.use(morgan('combined', { stream: logger.stream }));
 
@@ -58,6 +37,18 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(cookieParser());
+
+// User-based rate limiting (applied after authentication middleware in routes)
+const userRateLimiter = createUserRateLimiter({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  maxRequestsAuthenticated: 1000, // Authenticated users get higher limit
+  maxRequestsUnauthenticated: 100, // Unauthenticated users get lower limit
+});
+
+// Note: Rate limiting is applied per-route in v1 routes for better control
+
+// Rate limit status endpoint
+app.get('/api/v1/rate-limit-status', getRateLimitStatus);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
