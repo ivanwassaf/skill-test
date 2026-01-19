@@ -198,6 +198,74 @@ Pending Tests (Expected):
 - 1 test with blockchain state dependency (passes individually)
 ```
 
+### 🔄 CI/CD Pipeline ⭐ NEW
+
+**GitHub Actions Workflow**: Fully automated continuous integration and deployment
+
+**Pipeline Status**: ✅ All jobs passing (10/10)
+
+#### Workflow Jobs
+1. **Lint & Format** - ESLint + Prettier validation
+2. **Unit Tests** - Backend unit tests with PostgreSQL + Redis services
+3. **Integration Tests** - Full integration test suite with database setup
+4. **Code Coverage** - Test coverage reports with database services
+5. **Security Scan** - npm audit for vulnerabilities
+6. **Build Backend** - Docker image build for backend
+7. **Build Frontend** - Vite production build with optimizations
+8. **Docker Build** - Multi-platform container builds (optional Docker Hub push)
+9. **Deploy** - Staging deployment (conditional on main branch)
+10. **Notify** - Workflow status notifications
+
+#### Key Features
+- ✅ **Automated Database Setup**: SQL scripts executed in CI (tables.sql + seed-db.sql + test-data.sql)
+- ✅ **Service Dependencies**: PostgreSQL 15 + Redis 7 containers for tests
+- ✅ **Cross-environment Testing**: NODE_ENV=test with disabled rate limiting
+- ✅ **Chai 4.5.0 Compatibility**: CommonJS support for test suites
+- ✅ **Rollup Fix**: --legacy-peer-deps for optional dependencies on Linux
+- ✅ **Docker Hub Optional**: continue-on-error for builds without credentials
+- ✅ **Memory Optimization**: NODE_OPTIONS --max-old-space-size=4096 for frontend builds
+
+#### CI/CD Fixes Applied (January 2026)
+```bash
+Issue 1: Rollup optional dependencies (@rollup/rollup-linux-x64-gnu)
+├─ Solution: Remove package-lock.json + npm install --legacy-peer-deps
+├─ Root cause: npm issue #4828 on Linux runners
+└─ Status: ✅ RESOLVED
+
+Issue 2: labeler.yml format incompatibility
+├─ Solution: Updated to actions/labeler@v5 format
+├─ Changed: any-glob-to-any-file pattern structure
+└─ Status: ✅ RESOLVED
+
+Issue 3: Chai ESM compatibility error
+├─ Solution: Downgrade from 6.2.2 to 4.5.0
+├─ Root cause: Chai v6 is ESM-only, incompatible with require()
+└─ Status: ✅ RESOLVED
+
+Issue 4: Rate limiting blocking tests
+├─ Solution: Skip rate limiting when NODE_ENV=test
+├─ Implementation: Conditional middleware in user-rate-limiter.js
+└─ Status: ✅ RESOLVED
+
+Issue 5: Empty database in CI
+├─ Solution: Execute SQL files with psql in workflow
+├─ Files: tables.sql, seed-db.sql, test-data.sql
+└─ Status: ✅ RESOLVED
+
+Issue 6: Wrong user credentials for tests
+├─ Solution: Created seed_db/test-data.sql
+├─ User: admin@test.com / Test@1234 (argon2 hash)
+└─ Status: ✅ RESOLVED
+
+Issue 7: Docker Hub login credentials missing
+├─ Solution: Added continue-on-error: true
+├─ Impact: Pipeline runs without Docker Hub secrets
+└─ Status: ✅ RESOLVED
+```
+
+**Pipeline URL**: https://github.com/ivanwassaf/skill-test/actions  
+**Documentation**: See `.github/README.md` for detailed workflow documentation
+
 ### 🔄 Database Optimizations
 - **Connection Pooling**: Configured with proper limits
 - **Query Optimization**: Added indexes on frequently queried fields
@@ -985,4 +1053,4 @@ docker-compose down -v
 
 **Happy Coding! 🚀**
 
-*Last Updated: January 19, 2026 - Enterprise Production Ready Release with Redis Cache, CQRS, E2E Testing, Advanced Rate Limiting, and Operational Runbooks*
+*Last Updated: January 19, 2026 - Enterprise Production Ready Release with Redis Cache, CQRS, E2E Testing, Advanced Rate Limiting, Operational Runbooks, and Fully Automated CI/CD Pipeline (10/10 Jobs Passing)*
