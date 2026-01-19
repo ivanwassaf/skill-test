@@ -54,6 +54,15 @@ async function main() {
   );
   console.log("📄 ABI saved to:", abiPath);
   
+  // Also save to backend directory if running in Docker
+  const backendAbiPath = path.join(__dirname, "..", "..", "backend", "StudentCertificate.abi.json");
+  try {
+    fs.writeFileSync(backendAbiPath, JSON.stringify(artifact.abi, null, 2));
+    console.log("📄 ABI copied to backend:", backendAbiPath);
+  } catch (error) {
+    console.log("ℹ️  Could not copy ABI to backend (may not be needed)");
+  }
+  
   // Verify on Etherscan/Polygonscan (only on public networks)
   if (hre.network.name !== "localhost" && hre.network.name !== "hardhat") {
     console.log("⏳ Waiting for block confirmations...");

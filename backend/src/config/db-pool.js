@@ -1,5 +1,5 @@
 const { Pool } = require('pg');
-const { logger } = require('../config');
+const logger = require('./logger');
 
 // Create a connection pool for better performance
 const pool = new Pool({

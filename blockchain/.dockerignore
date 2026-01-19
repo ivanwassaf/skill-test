@@ -1,0 +1,28 @@
+# Hardhat
+node_modules
+cache
+artifacts
+
+# Deployment files (generated)
+deployments/*.json
+
+# Environment
+.env
+
+# Logs
+*.log
+
+# Coverage
+coverage
+coverage.json
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

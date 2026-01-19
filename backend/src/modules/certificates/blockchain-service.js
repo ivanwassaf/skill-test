@@ -27,8 +27,17 @@ class BlockchainService {
                 return false;
             }
 
-            // Initialize provider
-            this.provider = new ethers.JsonRpcProvider(rpcUrl);
+            // Initialize provider with static network config to avoid auto-detection
+            const networkConfig = ethers.Network.from({
+                chainId: 31337, // Hardhat default chainId
+                name: 'localhost'
+            });
+            
+            this.provider = new ethers.JsonRpcProvider(
+                rpcUrl,
+                networkConfig,
+                { staticNetwork: networkConfig }
+            );
             
             // Initialize wallet
             this.wallet = new ethers.Wallet(privateKey, this.provider);
@@ -54,7 +63,11 @@ class BlockchainService {
 
             return true;
         } catch (error) {
-            logger.error('❌ Failed to initialize blockchain', { error: error.message });
+            logger.error('❌ Failed to initialize blockchain', { 
+                error: error.message, 
+                stack: error.stack,
+                rpcUrl: this.getRpcUrl(process.env.BLOCKCHAIN_NETWORK || 'localhost')
+            });
             return false;
         }
     }
@@ -153,7 +166,7 @@ class BlockchainService {
             const cert = await this.contract.getCertificate(certificateId);
             
             return {
-                id: cert.id.toString(),
+                certificateId: cert.id.toString(),
                 studentAddress: cert.studentAddress,
                 studentName: cert.studentName,
                 studentEmail: cert.studentEmail,

@@ -137,7 +137,21 @@ const handleVerifyCertificate = async (req, res) => {
             });
         }
 
-        const certificate = await blockchainService.getCertificate(certificateId);
+        // Get certificate details - wrap in try-catch to handle any blockchain errors
+        let certificate = null;
+        try {
+            certificate = await blockchainService.getCertificate(certificateId);
+        } catch (error) {
+            logger.error('Error getting certificate details during verify', { error: error.message });
+            // If we can't get details but it's valid, return basic info
+            return res.status(200).json({
+                success: true,
+                data: {
+                    valid: true,
+                    certificateId: certificateId
+                }
+            });
+        }
         
         // Get metadata from IPFS
         let metadata = null;
@@ -191,19 +205,70 @@ const handleGetCertificate = async (req, res) => {
             console.error('Error fetching IPFS metadata:', error);
         }
 
+        // Build response data
+        const responseData = {
+            ...certificate,
+            metadata: metadata,
+            ipfsUrl: `https://gateway.pinata.cloud/ipfs/${certificate.ipfsHash}`
+        };
+
+        // Add studentId from metadata if available
+        if (metadata && metadata.studentId) {
+            responseData.studentId = metadata.studentId;
+        } else if (certificate.studentEmail) {
+            // Fallback: Look up studentId from database using email
+            try {
+                const { db } = require('../../config');
+                const result = await db.query(
+                    'SELECT id FROM users WHERE email = $1 AND role_id = 3',
+                    [certificate.studentEmail]
+                );
+                if (result.rows.length > 0) {
+                    responseData.studentId = result.rows[0].id;
+                }
+            } catch (error) {
+                console.error('Error looking up studentId:', error);
+            }
+        }
+
         res.status(200).json({
             success: true,
-            data: {
-                ...certificate,
-                metadata: metadata,
-                ipfsUrl: `https://gateway.pinata.cloud/ipfs/${certificate.ipfsHash}`
-            }
+            data: responseData
         });
     } catch (error) {
-        logger.error('Error getting certificate', { error: error.message, certificateId: req.params.certificateId });
+        const errorMsg = error.message || '';
+        logger.error('Error getting certificate', { 
+            error: errorMsg, 
+            certificateId: req.params.certificateId,
+            errorType: error.constructor.name
+        });
+        
+        // Check if certificate doesn't exist
+        // Error from blockchain will include these patterns
+        const notFoundPatterns = [
+            'does not exist',
+            'reverted',
+            'call revert exception',
+            'invalid BigNumber',
+            'out of bounds',
+            'BAD_DATA',
+            'could not decode result data'
+        ];
+        
+        const isNotFound = notFoundPatterns.some(pattern => 
+            errorMsg.toLowerCase().includes(pattern.toLowerCase())
+        );
+        
+        if (isNotFound) {
+            return res.status(404).json({
+                success: false,
+                message: 'Certificate not found'
+            });
+        }
+        
         res.status(500).json({
             success: false,
-            message: error.message || 'Failed to get certificate'
+            message: errorMsg || 'Failed to get certificate'
         });
     }
 };
@@ -233,7 +298,14 @@ const handleGetStudentCertificates = async (req, res) => {
         }
 
         // Get student's wallet address
-        const studentAddress = student.wallet_address || '0x0000000000000000000000000000000000000000';
+        // Use the same logic as when issuing certificates
+        let studentAddress = student.wallet_address;
+        if (!studentAddress) {
+            // Generate the same deterministic Ethereum address from student ID
+            const crypto = require('crypto');
+            const hash = crypto.createHash('sha256').update(`student_${studentId}`).digest('hex');
+            studentAddress = '0x' + hash.substring(0, 40); // Take first 20 bytes (40 hex chars)
+        }
 
         const certificateIds = await blockchainService.getStudentCertificates(studentAddress);
 
