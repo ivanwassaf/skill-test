@@ -1,6 +1,10 @@
 -- Test data for integration tests
 -- This file inserts test users and data needed for CI/CD integration tests
 
+-- Insert test class and section first (referenced by user_profiles)
+INSERT INTO classes (name, sections) VALUES ('Test Class', 'Test Section') ON CONFLICT (name) DO NOTHING;
+INSERT INTO sections (name) VALUES ('Test Section') ON CONFLICT (name) DO NOTHING;
+
 -- Insert test admin user (password: Test@1234)
 -- Hash generated with argon2id
 INSERT INTO users(name, email, role_id, created_dt, password, is_active, is_email_verified)
