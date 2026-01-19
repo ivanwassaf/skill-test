@@ -14,10 +14,45 @@ SELECT id, 'Male', 'Single', '1234567890', '1990-01-01', now(), 'Master', '5 yea
 FROM users WHERE email = 'admin@test.com'
 ON CONFLICT (user_id) DO NOTHING;
 
--- Insert some test students
-INSERT INTO students (name, gender, dob, email, phone, current_address, guardian_name, guardian_phone, class_id, section_id, status, admission_date)
+-- Insert test students (NO existe tabla students, se usan users con role_id=3)
+-- Password for all test students: Test@1234 (same hash as admin)
+INSERT INTO users(name, email, role_id, created_dt, password, is_active, is_email_verified)
 VALUES
-('Student One', 'Male', '2010-01-15', 'student1@test.com', '1111111111', '123 Test St', 'Guardian One', '2222222222', NULL, NULL, 'active', now()),
-('Student Two', 'Female', '2011-03-20', 'student2@test.com', '3333333333', '456 Test Ave', 'Guardian Two', '4444444444', NULL, NULL, 'active', now()),
-('Student Three', 'Male', '2010-07-10', 'student3@test.com', '5555555555', '789 Test Blvd', 'Guardian Three', '6666666666', NULL, NULL, 'active', now())
+('Student One', 'student1@test.com', 3, now(), '$argon2id$v=19$m=65536,t=3,p=4$gCdEasg7XDGYdp9SUx5I1g$BsLnOehjqKsgTXTeCD0/JzIU8R828d1ItD2g3pyY4fI', true, true),
+('Student Two', 'student2@test.com', 3, now(), '$argon2id$v=19$m=65536,t=3,p=4$gCdEasg7XDGYdp9SUx5I1g$BsLnOehjqKsgTXTeCD0/JzIU8R828d1ItD2g3pyY4fI', true, true),
+('Student Three', 'student3@test.com', 3, now(), '$argon2id$v=19$m=65536,t=3,p=4$gCdEasg7XDGYdp9SUx5I1g$BsLnOehjqKsgTXTeCD0/JzIU8R828d1ItD2g3pyY4fI', true, true)
 ON CONFLICT (email) DO NOTHING;
+
+-- Insert profiles for test students
+INSERT INTO user_profiles
+(user_id, gender, marital_status, phone, dob, join_dt, current_address, permanent_address, father_name, mother_name, emergency_phone, class_name, section_name, roll)
+SELECT 
+  id, 
+  CASE name 
+    WHEN 'Student One' THEN 'Male'
+    WHEN 'Student Two' THEN 'Female'
+    WHEN 'Student Three' THEN 'Male'
+  END,
+  'Single', 
+  CASE name
+    WHEN 'Student One' THEN '1111111111'
+    WHEN 'Student Two' THEN '3333333333'
+    WHEN 'Student Three' THEN '5555555555'
+  END,
+  '2010-01-15', 
+  now(), 
+  '123 Test St', 
+  '123 Test St', 
+  'Test Father', 
+  'Test Mother', 
+  '9999999999',
+  'Test Class',
+  'Test Section',
+  CASE name
+    WHEN 'Student One' THEN 1
+    WHEN 'Student Two' THEN 2
+    WHEN 'Student Three' THEN 3
+  END
+FROM users 
+WHERE email IN ('student1@test.com', 'student2@test.com', 'student3@test.com')
+ON CONFLICT (user_id) DO NOTHING;
