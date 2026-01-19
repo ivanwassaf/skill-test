@@ -62,7 +62,7 @@ jobs:
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: unit-test-results
         path: backend/test-results/
@@ -137,7 +137,7 @@ jobs:
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: integration-test-results
         path: backend/test-results/
@@ -194,7 +194,7 @@ jobs:
         fail_ci_if_error: false
 
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: coverage-report
         path: backend/coverage/
@@ -233,7 +233,7 @@ jobs:
         npm audit --json > audit-report.json || true
 
     - name: Upload audit report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: security-audit
         path: backend/audit-report.json
@@ -269,7 +269,7 @@ jobs:
         cp -r node_modules build/ 2>/dev/null || true
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: backend-build
         path: backend/build/
@@ -309,7 +309,7 @@ jobs:
         NODE_OPTIONS: '--max-old-space-size=4096'
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: frontend-build
         path: frontend/dist/
