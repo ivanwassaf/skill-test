@@ -162,7 +162,7 @@ jobs:
         echo "📊 Coverage: $COVERAGE%"
 
     - name: Comment PR
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           const coverage = '${{ steps.coverage.outputs.coverage }}';
